@@ -12,26 +12,33 @@ import (
 	"github.com/mholt/caddy/middleware"
 )
 
-// DefaultInterval is the minimum interval to delay before
-// requesting another git pull
-const DefaultInterval time.Duration = time.Hour * 1
+const (
+	// DefaultInterval is the minimum interval to delay before
+	// requesting another git pull
+	DefaultInterval time.Duration = time.Hour * 1
 
-// Number of retries if git pull fails
-const numRetries = 3
+	// Number of retries if git pull fails
+	numRetries = 3
 
-// gitBinary holds the absolute path to git executable
-var gitBinary string
+	// variable for latest tag
+	latestTag = "{latest}"
+)
 
-// shell holds the shell to be used. Either sh or bash.
-var shell string
+var (
+	// gitBinary holds the absolute path to git executable
+	gitBinary string
 
-// initMutex prevents parallel attempt to validate
-// git requirements.
-var initMutex = sync.Mutex{}
+	// shell holds the shell to be used. Either sh or bash.
+	shell string
 
-// Services holds all git pulling services and provides the function to
-// stop them.
-var Services = &services{}
+	// initMutex prevents parallel attempt to validate
+	// git requirements.
+	initMutex = sync.Mutex{}
+
+	// Services holds all git pulling services and provides the function to
+	// stop them.
+	Services = &services{}
+)
 
 // Repo is the structure that holds required information
 // of a git repository.
@@ -47,6 +54,7 @@ type Repo struct {
 	lastPull   time.Time     // time of the last successful pull
 	lastCommit string        // hash for the most recent commit
 	sync.Mutex
+	latestTag  string // latest tag name
 	HookUrl    string // url to listen on for webhooks
 	HookSecret string // secret to validate hooks
 
@@ -90,9 +98,36 @@ func (r *Repo) Pull() error {
 
 // Pull performs git clone, or git pull if repository exists
 func (r *Repo) pull() error {
-	params := []string{"clone", "-b", r.Branch, r.URL, r.Path}
+	branch := r.Branch
+	tagMode := r.Branch == latestTag
+
+	// if set, retrieve latest tag.
+	if tagMode {
+		tag, err := r.getLatestTag()
+		if err != nil {
+			Logger().Println("Error retrieving latest tag.")
+			return err
+		}
+		switch tag {
+		case "":
+			Logger().Println("No tags found, defaulting to master.")
+			branch = "master"
+			tagMode = false
+		case r.latestTag:
+			Logger().Println("No new tags.")
+			return nil
+		default:
+			branch = tag
+			r.latestTag = tag
+		}
+	}
+
+	params := []string{"clone", "-b", branch, r.URL, r.Path}
 	if r.pulled {
-		params = []string{"pull", "origin", r.Branch}
+		params = []string{"pull", "origin", branch}
+		if tagMode {
+			params = []string{"checkout", "tags/" + branch}
+		}
 	}
 
 	// if key is specified, pull using ssh key
@@ -200,6 +235,21 @@ func (r *Repo) Prepare() error {
 // repository. Useful for checking if changes occur.
 func (r *Repo) getMostRecentCommit() (string, error) {
 	command := gitBinary + ` --no-pager log -n 1 --pretty=format:"%H"`
+	c, args, err := middleware.SplitCommandAndArgs(command)
+	if err != nil {
+		return "", err
+	}
+	return runCmdOutput(c, args, r.Path)
+}
+
+func (r *Repo) getLatestTag() (string, error) {
+	// fetch updates to get latest tag
+	err := runCmd(gitBinary, []string{"fetch", "origin", "--tags"}, r.Path)
+	if err != nil {
+		return "", err
+	}
+	// retrieve latest tag
+	command := gitBinary + ` describe origin/master --abbrev=0 --tags`
 	c, args, err := middleware.SplitCommandAndArgs(command)
 	if err != nil {
 		return "", err
