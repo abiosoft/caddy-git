@@ -249,7 +249,7 @@ func (r *Repo) getLatestTag() (string, error) {
 		return "", err
 	}
 	// retrieve latest tag
-	command := gitBinary + ` describe origin/master --abbrev=0 --tags`
+	command := gitBinary + ` describe origin --abbrev=0 --tags`
 	c, args, err := middleware.SplitCommandAndArgs(command)
 	if err != nil {
 		return "", err
