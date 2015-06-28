@@ -32,7 +32,7 @@ git [repo path] {
 ```
 * **repo** is the URL to the repository; SSH and HTTPS URLs are supported.
 * **path** is the path, relative to site root, to clone the repository into; default is site root.
-* **branch** is the branch or tag to pull; default is master branch.
+* **branch** is the branch or tag to pull; default is master branch. **`{latest}`** is a placeholder for latest tag which ensures the most recent tag is always pulled.
 * **key** is the path to the SSH private key; only required for private repositories.
 * **interval** is the number of seconds between pulls; default is 3600 (1 hour), minimum 5.
 * **path** and **secret** are used to create a webhook which pulls the latest right after a push. The git service provider must support webhooks.
