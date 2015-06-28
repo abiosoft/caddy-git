@@ -13,6 +13,12 @@ import (
 	"github.com/mholt/caddy/middleware"
 )
 
+const (
+	// DefaultInterval is the minimum interval to delay before
+	// requesting another git pull
+	DefaultInterval time.Duration = time.Hour * 1
+)
+
 // Git configures a new Git service routine.
 func Setup(c *setup.Controller) (middleware.Middleware, error) {
 	repo, err := parse(c)

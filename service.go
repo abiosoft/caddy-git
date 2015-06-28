@@ -6,6 +6,12 @@ import (
 	"github.com/abiosoft/caddy-git/gitos"
 )
 
+var (
+	// Services holds all git pulling services and provides the function to
+	// stop them.
+	Services = &services{}
+)
+
 // repoService is the service that runs in background and periodically
 // pull from the repository.
 type repoService struct {
