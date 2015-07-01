@@ -19,6 +19,17 @@ const (
 	latestTag = "{latest}"
 )
 
+// Git represent multiple repositories.
+type Git []*Repo
+
+// Repo retrieves repository at i or nil if not found.
+func (g Git) Repo(i int) *Repo {
+	if i < len(g) {
+		return g[i]
+	}
+	return nil
+}
+
 // Repo is the structure that holds required information
 // of a git repository.
 type Repo struct {

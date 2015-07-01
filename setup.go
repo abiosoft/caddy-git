@@ -21,43 +21,50 @@ const (
 
 // Git configures a new Git service routine.
 func Setup(c *setup.Controller) (middleware.Middleware, error) {
-	repo, err := parse(c)
+	git, err := parse(c)
 	if err != nil {
 		return nil, err
 	}
 
-	// If a HookUrl is set, we switch to event based pulling.
-	// Install the url handler
-	if repo.HookUrl != "" {
+	// loop through all repos and and start monitoring
+	for i := range git {
+		repo := git.Repo(i)
 
-		c.Startup = append(c.Startup, func() error {
-			return repo.Pull()
-		})
+		// If a HookUrl is set, we switch to event based pulling.
+		// Install the url handler
+		if repo.HookUrl != "" {
 
-		webhook := &WebHook{Repo: repo}
-		return func(next middleware.Handler) middleware.Handler {
-			webhook.Next = next
-			return webhook
-		}, nil
+			c.Startup = append(c.Startup, func() error {
+				return repo.Pull()
+			})
 
-	} else {
-		c.Startup = append(c.Startup, func() error {
+			webhook := &WebHook{Repo: repo}
+			return func(next middleware.Handler) middleware.Handler {
+				webhook.Next = next
+				return webhook
+			}, nil
 
-			// Start service routine in background
-			Start(repo)
+		} else {
+			c.Startup = append(c.Startup, func() error {
 
-			// Do a pull right away to return error
-			return repo.Pull()
-		})
+				// Start service routine in background
+				Start(repo)
+
+				// Do a pull right away to return error
+				return repo.Pull()
+			})
+		}
 	}
 
 	return nil, err
 }
 
-func parse(c *setup.Controller) (*Repo, error) {
-	repo := &Repo{Branch: "master", Interval: DefaultInterval, Path: c.Root}
+func parse(c *setup.Controller) (Git, error) {
+	var git Git
 
 	for c.Next() {
+		repo := &Repo{Branch: "master", Interval: DefaultInterval, Path: c.Root}
+
 		args := c.RemainingArgs()
 
 		switch len(args) {
@@ -119,38 +126,46 @@ func parse(c *setup.Controller) (*Repo, error) {
 				return nil, c.ArgErr()
 			}
 		}
-	}
 
-	// if repo is not specified, return error
-	if repo.URL == "" {
-		return nil, c.ArgErr()
-	}
-
-	// if private key is not specified, convert repository URL to https
-	// to avoid ssh authentication
-	// else validate git URL
-	// Note: private key support not yet available on Windows
-	var err error
-	if repo.KeyPath == "" {
-		repo.URL, repo.Host, err = sanitizeHTTP(repo.URL)
-	} else {
-		repo.URL, repo.Host, err = sanitizeGit(repo.URL)
-		// TODO add Windows support for private repos
-		if runtime.GOOS == "windows" {
-			return nil, fmt.Errorf("private repository not yet supported on Windows")
+		// if repo is not specified, return error
+		if repo.URL == "" {
+			return nil, c.ArgErr()
 		}
+
+		// if private key is not specified, convert repository URL to https
+		// to avoid ssh authentication
+		// else validate git URL
+		// Note: private key support not yet available on Windows
+		var err error
+		if repo.KeyPath == "" {
+			repo.URL, repo.Host, err = sanitizeHTTP(repo.URL)
+		} else {
+			repo.URL, repo.Host, err = sanitizeGit(repo.URL)
+			// TODO add Windows support for private repos
+			if runtime.GOOS == "windows" {
+				return nil, fmt.Errorf("private repository not yet supported on Windows")
+			}
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		// validate git requirements
+		if err = Init(); err != nil {
+			return nil, err
+		}
+
+		// prepare repo for use
+		if err = repo.Prepare(); err != nil {
+			return nil, err
+		}
+
+		git = append(git, repo)
+
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
-	// validate git requirements
-	if err = Init(); err != nil {
-		return nil, err
-	}
-
-	return repo, repo.Prepare()
+	return git, nil
 }
 
 // sanitizeHTTP cleans up repository URL and converts to https format

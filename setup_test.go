@@ -37,8 +37,9 @@ func TestIntervals(t *testing.T) {
 	for i, test := range tests {
 		SetLogger(gittest.NewLogger(gittest.Open("file")))
 		c1 := setup.NewTestController(test)
-		repo, err := parse(c1)
+		git, err := parse(c1)
 		check(t, err)
+		repo := git.Repo(0)
 
 		c2 := setup.NewTestController(test)
 		_, err = Setup(c2)
@@ -160,7 +161,7 @@ func TestGitParse(t *testing.T) {
 
 	for i, test := range tests {
 		c := setup.NewTestController(test.input)
-		repo, err := parse(c)
+		git, err := parse(c)
 		if !test.shouldErr && err != nil {
 			t.Errorf("Test %v should not error but found %v", i, err)
 			continue
@@ -169,6 +170,7 @@ func TestGitParse(t *testing.T) {
 			t.Errorf("Test %v should error but found nil", i)
 			continue
 		}
+		repo := git.Repo(0)
 		if !reposEqual(test.expected, repo) {
 			t.Errorf("Test %v expects %v but found %v", i, test.expected, repo)
 		}
