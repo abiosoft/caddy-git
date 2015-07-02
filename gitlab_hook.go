@@ -37,7 +37,7 @@ func (g GitlabHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (
 
 	event := r.Header.Get("X-Gitlab-Event")
 	if event == "" {
-		return http.StatusBadRequest, errors.New("the 'X-Github-Event' header is required but was missing.")
+		return http.StatusBadRequest, errors.New("the 'X-Gitlab-Event' header is required but was missing.")
 	}
 
 	switch event {
