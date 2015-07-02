@@ -2,6 +2,8 @@
 
 Middleware for [Caddy](https://caddyserver.com).
 
+[![Build Status](https://img.shields.io/travis/mholt/caddy.svg?style=flat-square)](https://travis-ci.org/abiosoft/caddy-git)
+
 git clones a git repository into the site. This makes it possible to deploy your site with a simple git push.
 
 The git directive does not chain in a handler. Instead, it starts a service routine that runs during the lifetime of the server. When the server starts, it clones the repository. While the server is still up, it pulls the latest every so often. In regular git fashion, a download only includes changes so it is very efficient.
