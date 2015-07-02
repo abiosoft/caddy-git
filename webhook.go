@@ -22,6 +22,7 @@ type hookHandler interface {
 // Register new hook handlers here!
 var handlers = []hookHandler{
 	GithubHook{},
+	GitlabHook{},
 }
 
 // ServeHTTP implements the middlware.Handler interface.
