@@ -188,7 +188,11 @@ func sanitizeHTTP(repoURL string) (string, string, error) {
 		url.Path = "/" + url.Path[i+1:]
 	}
 
-	repoURL = "https://" + url.Host + url.Path
+	if url.User != nil {
+		repoURL = "https://" + url.User.Username() + "@" + url.Host + url.Path
+	} else {
+		repoURL = "https://" + url.Host + url.Path
+	}
 
 	// add .git suffix if missing
 	if !strings.HasSuffix(repoURL, ".git") {
