@@ -29,8 +29,6 @@ var handlers = []hookHandler{
 
 // ServeHTTP implements the middlware.Handler interface.
 func (h WebHook) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
-	fmt.Println(r.URL.Path)
-	fmt.Println(h.Repo.HookUrl)
 	if r.URL.Path == h.Repo.HookUrl {
 
 		for _, handler := range handlers {

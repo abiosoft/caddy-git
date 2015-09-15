@@ -38,9 +38,9 @@ func (b BitbucketHook) DoesHandle(h http.Header) bool {
 }
 
 func (b BitbucketHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (int, error) {
-//	if !b.verifyBitbucketIP(r.RemoteAddr) {
-//		return http.StatusForbidden, errors.New("the request doesn't come from a valid IP")
-//	}
+	if !b.verifyBitbucketIP(r.RemoteAddr) {
+		return http.StatusForbidden, errors.New("the request doesn't come from a valid IP")
+	}
 
 	if r.Method != "POST" {
 		return http.StatusMethodNotAllowed, errors.New("the request had an invalid method.")
