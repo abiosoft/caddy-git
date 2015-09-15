@@ -139,9 +139,6 @@ func parse(c *setup.Controller) (Git, error) {
 		var err error
 		if repo.KeyPath == "" {
 			repo.URL, repo.Host, err = sanitizeHTTP(repo.URL)
-			if repo.Host == "bitbucket.org" {
-				Logger().Print("WARN: Private repository on bitbucket are not supported with HTTPS\n")
-			}
 		} else {
 			repo.URL, repo.Host, err = sanitizeGit(repo.URL)
 			// TODO add Windows support for private repos
