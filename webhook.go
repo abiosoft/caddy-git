@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/mholt/caddy/middleware"
-	"fmt"
 )
 
 // Middleware for handling web hooks of git providers
