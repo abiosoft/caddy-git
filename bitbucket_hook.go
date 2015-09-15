@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"net/http"
 	"net"
+	"net/http"
 )
 
 // See: https://confluence.atlassian.com/bitbucket/manage-webhooks-735643732.html
@@ -15,16 +15,16 @@ var bitbucketIPBlocks = []string{
 	"104.192.143.0/24",
 }
 
-type BitbucketHook struct {}
+type BitbucketHook struct{}
 
 type bbPush struct {
 	Push struct {
-			 Changes []struct {
-				 New struct {
-						 Name   string  `json:"name,omitempty"`
-					 } `json:"new,omitempty"`
-			 } `json:"changes,omitempty"`
-		 } `json:"push,omitempty"`
+		Changes []struct {
+			New struct {
+				Name string `json:"name,omitempty"`
+			} `json:"new,omitempty"`
+		} `json:"changes,omitempty"`
+	} `json:"push,omitempty"`
 }
 
 func (b BitbucketHook) DoesHandle(h http.Header) bool {
@@ -70,7 +70,6 @@ func (b BitbucketHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo
 	return http.StatusOK, nil
 }
 
-
 func (b BitbucketHook) handlePush(body []byte, repo *Repo) error {
 	var push bbPush
 
@@ -83,7 +82,7 @@ func (b BitbucketHook) handlePush(body []byte, repo *Repo) error {
 		return errors.New("the push was incomplete, missing change list")
 	}
 
-    change := push.Push.Changes[0]
+	change := push.Push.Changes[0]
 	if len(change.New.Name) == 0 {
 		return errors.New("the push didn't contain a valid branch name")
 	}

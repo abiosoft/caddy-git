@@ -158,7 +158,7 @@ func TestGitParse(t *testing.T) {
 			Then:    "echo hello world",
 		}},
 		{`git https://user@bitbucket.org/user/repo.git`, false, &Repo{
-			URL:     "https://user@bitbucket.org/user/repo.git",
+			URL: "https://user@bitbucket.org/user/repo.git",
 		}},
 		{`git https://user@bitbucket.org/user/repo.git {
 			key ~/.key

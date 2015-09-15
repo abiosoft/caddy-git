@@ -12,7 +12,7 @@ func TestBitbucketDeployPush(t *testing.T) {
 	bbHook := BitbucketHook{}
 
 	for i, test := range []struct {
-		ip 			 string
+		ip           string
 		body         string
 		event        string
 		responseBody string
