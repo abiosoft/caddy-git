@@ -188,7 +188,17 @@ func sanitizeHTTP(repoURL string) (string, string, error) {
 		url.Path = "/" + url.Path[i+1:]
 	}
 
-	repoURL = "https://" + url.Host + url.Path
+	if url.User != nil {
+		repoURL = "https://" + url.User.Username() + "@" + url.Host + url.Path
+	} else {
+		// Bitbucket require the user to be set into the HTTP URL
+		if url.Host == "bitbucket.org" {
+			segments := strings.Split(url.Path, "/")
+			repoURL = "https://" + segments[1] + "@" + url.Host + url.Path
+		} else {
+			repoURL = "https://" + url.Host + url.Path
+		}
+	}
 
 	// add .git suffix if missing
 	if !strings.HasSuffix(repoURL, ".git") {
