@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/mholt/caddy/middleware"
+	"fmt"
 )
 
 // Middleware for handling web hooks of git providers
@@ -23,11 +24,13 @@ type hookHandler interface {
 var handlers = []hookHandler{
 	GithubHook{},
 	GitlabHook{},
+	BitbucketHook{},
 }
 
 // ServeHTTP implements the middlware.Handler interface.
 func (h WebHook) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
-
+	fmt.Println(r.URL.Path)
+	fmt.Println(h.Repo.HookUrl)
 	if r.URL.Path == h.Repo.HookUrl {
 
 		for _, handler := range handlers {

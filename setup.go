@@ -139,6 +139,9 @@ func parse(c *setup.Controller) (Git, error) {
 		var err error
 		if repo.KeyPath == "" {
 			repo.URL, repo.Host, err = sanitizeHTTP(repo.URL)
+			if repo.Host == "bitbucket.org" {
+				return nil, fmt.Errorf("private repository on bitbucket are not supported withouth a key")
+			}
 		} else {
 			repo.URL, repo.Host, err = sanitizeGit(repo.URL)
 			// TODO add Windows support for private repos
@@ -188,11 +191,7 @@ func sanitizeHTTP(repoURL string) (string, string, error) {
 		url.Path = "/" + url.Path[i+1:]
 	}
 
-	if url.User != nil {
-		repoURL = "https://" + url.User.Username() + "@" + url.Host + url.Path
-	} else {
-		repoURL = "https://" + url.Host + url.Path
-	}
+	repoURL = "https://" + url.Host + url.Path
 
 	// add .git suffix if missing
 	if !strings.HasSuffix(repoURL, ".git") {
