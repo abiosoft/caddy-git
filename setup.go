@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mholt/caddy/config/setup"
+	"github.com/mholt/caddy/caddy/setup"
 	"github.com/mholt/caddy/middleware"
 )
 
