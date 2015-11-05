@@ -26,6 +26,9 @@ func Setup(c *setup.Controller) (middleware.Middleware, error) {
 		return nil, err
 	}
 
+	// repos configured with webhooks
+	var hookRepos []*Repo
+
 	// loop through all repos and and start monitoring
 	for i := range git {
 		repo := git.Repo(i)
@@ -34,26 +37,37 @@ func Setup(c *setup.Controller) (middleware.Middleware, error) {
 		// Install the url handler
 		if repo.HookUrl != "" {
 
-			c.Startup = append(c.Startup, func() error {
-				return repo.Pull()
+			c.OncePerServerBlock(func() error {
+				c.Startup = append(c.Startup, func() error {
+					return repo.Pull()
+				})
+				return nil
 			})
 
-			webhook := &WebHook{Repo: repo}
-			return func(next middleware.Handler) middleware.Handler {
-				webhook.Next = next
-				return webhook
-			}, nil
-
+			hookRepos = append(hookRepos, repo)
 		} else {
-			c.Startup = append(c.Startup, func() error {
+			c.OncePerServerBlock(func() error {
+				c.Startup = append(c.Startup, func() error {
 
-				// Start service routine in background
-				Start(repo)
+					// Start service routine in background
+					Start(repo)
 
-				// Do a pull right away to return error
-				return repo.Pull()
+					// Do a pull right away to return error
+					return repo.Pull()
+				})
+				return nil
 			})
 		}
+	}
+
+	// if there are repo(s) with webhook
+	// return handler
+	if len(hookRepos) > 0 {
+		webhook := &WebHook{Repos: hookRepos}
+		return func(next middleware.Handler) middleware.Handler {
+			webhook.Next = next
+			return webhook
+		}, err
 	}
 
 	return nil, err

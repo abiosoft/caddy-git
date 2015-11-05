@@ -8,8 +8,8 @@ import (
 
 // Middleware for handling web hooks of git providers
 type WebHook struct {
-	Repo *Repo
-	Next middleware.Handler
+	Repos []*Repo
+	Next  middleware.Handler
 }
 
 // Interface for specific providers to implement.
@@ -30,14 +30,17 @@ var handlers = []hookHandler{
 // ServeHTTP implements the middlware.Handler interface.
 func (h WebHook) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 
-	if r.URL.Path == h.Repo.HookUrl {
+	for _, repo := range h.Repos {
 
-		for _, handler := range handlers {
-			// if a handler indicates it does handle the request,
-			// we do not try other handlers. Only one handler ever
-			// handles a specific request.
-			if handler.DoesHandle(r.Header) {
-				return handler.Handle(w, r, h.Repo)
+		if r.URL.Path == repo.HookUrl {
+
+			for _, handler := range handlers {
+				// if a handler indicates it does handle the request,
+				// we do not try other handlers. Only one handler ever
+				// handles a specific request.
+				if handler.DoesHandle(r.Header) {
+					return handler.Handle(w, r, repo)
+				}
 			}
 		}
 	}
