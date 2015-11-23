@@ -128,7 +128,7 @@ fi
 # Run the git command
 %v "$@"
 
-`, shell, gitBinary))
+`, shell, shell, gitBinary))
 }
 
 // bashScript forms content of bash script to clone or update a repo using ssh
