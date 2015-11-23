@@ -237,7 +237,8 @@ trap 'rm -f /tmp/.git_ssh.$$' 0
 
 if [ "$1" = "-i" ]; then
     SSH_KEY=$2; shift; shift
-    echo "ssh -i $SSH_KEY \$@" > /tmp/.git_ssh.$$
+    echo "#!/bin/bash \n \
+    ssh -i $SSH_KEY \$@" > /tmp/.git_ssh.$$
     chmod +x /tmp/.git_ssh.$$
     export GIT_SSH=/tmp/.git_ssh.$$
 fi
