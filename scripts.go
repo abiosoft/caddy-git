@@ -116,7 +116,8 @@ trap 'rm -f /tmp/.git_ssh.$$' 0
 
 if [ "$1" = "-i" ]; then
     SSH_KEY=$2; shift; shift
-    echo "ssh -i $SSH_KEY \$@" > /tmp/.git_ssh.$$
+    echo "#!/bin/%v \n \
+    ssh -i $SSH_KEY \$@" > /tmp/.git_ssh.$$
     chmod +x /tmp/.git_ssh.$$
     export GIT_SSH=/tmp/.git_ssh.$$
 fi
@@ -127,7 +128,7 @@ fi
 # Run the git command
 %v "$@"
 
-`, shell, gitBinary))
+`, shell, shell, gitBinary))
 }
 
 // bashScript forms content of bash script to clone or update a repo using ssh
