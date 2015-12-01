@@ -40,8 +40,8 @@ git [repo path] {
 * **branch** is the branch or tag to pull; default is master branch. **`{latest}`** is a placeholder for latest tag which ensures the most recent tag is always pulled.
 * **key** is the path to the SSH private key; only required for private repositories.
 * **interval** is the number of seconds between pulls; default is 3600 (1 hour), minimum 5.
-* **path** and **secret** are used to create a webhook which pulls the latest right after a push. This is currently limited to **Github**, **Gitlab** and **BitBucket**.
-* **command** is a command to execute after successful pull; followed by **args** which are any arguments to pass to the command.
+* **path** and **secret** are used to create a webhook which pulls the latest right after a push. This is currently limited to **Github**, **Gitlab** and **BitBucket** and a [generic format](#generic_format) for others. **secret** is currently supported for GitHub hooks only.
+* **command** is a command to execute after successful pull; followed by **args** which are any arguments to pass to the command. You can have multiple lines of this for multiple commands.
 
 Each property in the block is optional. The path and repo may be specified on the first line, as in the first syntax, or they may be specified in the block with other values.
 
@@ -82,5 +82,20 @@ git git@github.com:user/myphpsite {
 	key /home/user/.ssh/id_rsa
 }
 fastcgi / 127.0.0.1:9000 php
+```
+
+Specifying a webhook:
+```
+git git@github.com:user/site {
+	hook /webhook secret-password
+}
+```
+
+<a name="generic_format"></a>
+Generic webhook payload:
+```
+{
+	"ref" : "refs/heads/branch"
+}
 ```
 

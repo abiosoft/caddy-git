@@ -79,13 +79,13 @@ func TestGit(t *testing.T) {
 		output string
 	}{
 		{
-			&Repo{Path: "gitdir", URL: "git@github.com:user/repo.git", KeyPath: "~/.key", Then: "echo Hello"},
+			&Repo{Path: "gitdir", URL: "git@github.com:user/repo.git", KeyPath: "~/.key", Then: []string{"echo Hello"}},
 			`git@github.com:user/repo.git pulled.
 Command echo Hello successful.
 `,
 		},
 		{
-			&Repo{Path: "gitdir", URL: "https://github.com/user/repo.git", Then: "echo Hello"},
+			&Repo{Path: "gitdir", URL: "https://github.com/user/repo.git", Then: []string{"echo Hello"}},
 			`https://github.com/user/repo.git pulled.
 Command echo Hello successful.
 `,
@@ -118,7 +118,7 @@ Command echo Hello successful.
 	// pull with error
 	repos = []*Repo{
 		&Repo{Path: "gitdir", URL: "http://github.com:u/repo.git"},
-		&Repo{Path: "gitdir", URL: "https://github.com/user/repo.git", Then: "echo Hello"},
+		&Repo{Path: "gitdir", URL: "https://github.com/user/repo.git", Then: []string{"echo Hello"}},
 		&Repo{Path: "gitdir"},
 		&Repo{Path: "gitdir", KeyPath: ".key"},
 	}
@@ -200,7 +200,7 @@ func createRepo(r *Repo) *Repo {
 	if r.Path != "" {
 		repo.Path = r.Path
 	}
-	if r.Then != "" {
+	if r.Then != nil {
 		repo.Then = r.Then
 	}
 	if r.URL != "" {

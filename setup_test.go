@@ -1,6 +1,7 @@
 package git
 
 import (
+	"fmt"
 	"io/ioutil"
 	"strings"
 	"testing"
@@ -155,7 +156,7 @@ func TestGitParse(t *testing.T) {
 		}`, false, &Repo{
 			KeyPath: "~/.key",
 			URL:     "git@github.com:user/repo.git",
-			Then:    "echo hello world",
+			Then:    []string{"echo hello world"},
 		}},
 		{`git https://user@bitbucket.org/user/repo.git`, false, &Repo{
 			URL: "https://user@bitbucket.org/user/repo.git",
@@ -211,7 +212,7 @@ func reposEqual(expected, repo *Repo) bool {
 	if expected.Path != "" && expected.Path != repo.Path {
 		return false
 	}
-	if expected.Then != "" && expected.Then != repo.Then {
+	if expected.Then != nil && fmt.Sprint(expected.Then) != fmt.Sprint(repo.Then) {
 		return false
 	}
 	if expected.URL != "" && expected.URL != repo.URL {

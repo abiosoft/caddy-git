@@ -1,6 +1,7 @@
 package git
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -39,7 +40,7 @@ type Repo struct {
 	Branch     string        // Git branch
 	KeyPath    string        // Path to private ssh key
 	Interval   time.Duration // Interval between pulls
-	Then       string        // Command to execute after successful git pull
+	Then       []string      // Commands to execute after successful git pull
 	pulled     bool          // true if there was a successful pull
 	lastPull   time.Time     // time of the last successful pull
 	lastCommit string        // hash for the most recent commit
@@ -279,16 +280,37 @@ func (r *Repo) originURL() (string, error) {
 // execThen executes r.Then.
 // It is trigged after successful git pull
 func (r *Repo) execThen() error {
-	if r.Then == "" {
+	var errs error
+	for _, command := range r.Then {
+		if command == "" {
+			return nil
+		}
+		c, args, err := middleware.SplitCommandAndArgs(command)
+		if err != nil {
+			return err
+		}
+
+		if err = runCmd(c, args, r.Path); err == nil {
+			Logger().Printf("Command %v successful.\n", command)
+		}
+		errs = mergeErrors(errs, err)
+	}
+	return errs
+}
+
+func mergeErrors(errs ...error) error {
+	if len(errs) == 0 {
 		return nil
 	}
-	c, args, err := middleware.SplitCommandAndArgs(r.Then)
-	if err != nil {
-		return err
-	}
-
-	if err = runCmd(c, args, r.Path); err == nil {
-		Logger().Printf("Command %v successful.\n", r.Then)
+	var err error
+	for _, e := range errs {
+		if err == nil {
+			err = e
+			continue
+		}
+		if e != nil {
+			err = errors.New(fmt.Sprintf("%v\n%v", err.Error(), e.Error()))
+		}
 	}
 	return err
 }

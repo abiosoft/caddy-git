@@ -135,7 +135,7 @@ func parse(c *setup.Controller) (Git, error) {
 				if len(thenArgs) == 0 {
 					return nil, c.ArgErr()
 				}
-				repo.Then = strings.Join(thenArgs, " ")
+				repo.Then = append(repo.Then, strings.Join(thenArgs, " "))
 			default:
 				return nil, c.ArgErr()
 			}
