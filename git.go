@@ -282,12 +282,10 @@ func (r *Repo) originURL() (string, error) {
 func (r *Repo) execThen() error {
 	var errs error
 	for _, command := range r.Then {
-		if command == "" {
-			return nil
-		}
 		c, args, err := middleware.SplitCommandAndArgs(command)
 		if err != nil {
-			return err
+			errs = mergeErrors(errs, err)
+			continue
 		}
 
 		if err = runCmd(c, args, r.Path); err == nil {
