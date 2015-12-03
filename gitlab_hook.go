@@ -10,7 +10,6 @@ import (
 
 type GitlabHook struct{}
 
-
 type glPush struct {
 	Ref string `json:"ref"`
 }
@@ -29,7 +28,7 @@ func (g GitlabHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (
 	if r.Method != "POST" {
 		return http.StatusMethodNotAllowed, errors.New("the request had an invalid method.")
 	}
-	
+
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return http.StatusRequestTimeout, errors.New("could not read body from request")
@@ -47,7 +46,6 @@ func (g GitlabHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (
 			return http.StatusBadRequest, err
 		}
 
-
 	// return 400 if we do not handle the event type.
 	default:
 		return http.StatusBadRequest, nil
@@ -55,7 +53,6 @@ func (g GitlabHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (
 
 	return http.StatusOK, nil
 }
-
 
 func (g GitlabHook) handlePush(body []byte, repo *Repo) error {
 	var push glPush

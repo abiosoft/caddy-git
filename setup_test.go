@@ -156,7 +156,7 @@ func TestGitParse(t *testing.T) {
 		}`, false, &Repo{
 			KeyPath: "~/.key",
 			URL:     "git@github.com:user/repo.git",
-			Then:    []string{"echo hello world"},
+			Then:    []Then{NewThen("echo", "hello world")},
 		}},
 		{`git https://user@bitbucket.org/user/repo.git`, false, &Repo{
 			URL: "https://user@bitbucket.org/user/repo.git",
@@ -194,6 +194,13 @@ func TestGitParse(t *testing.T) {
 }
 
 func reposEqual(expected, repo *Repo) bool {
+	thenStr := func(then []Then) string {
+		var str []string
+		for _, t := range then {
+			str = append(str, t.Command())
+		}
+		return fmt.Sprint(str)
+	}
 	if expected == nil {
 		return repo == nil
 	}
@@ -212,7 +219,7 @@ func reposEqual(expected, repo *Repo) bool {
 	if expected.Path != "" && expected.Path != repo.Path {
 		return false
 	}
-	if expected.Then != nil && fmt.Sprint(expected.Then) != fmt.Sprint(repo.Then) {
+	if expected.Then != nil && thenStr(expected.Then) != thenStr(repo.Then) {
 		return false
 	}
 	if expected.URL != "" && expected.URL != repo.URL {

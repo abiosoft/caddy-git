@@ -117,6 +117,8 @@ func (f fakeCmd) Stdout(stdout io.Writer) {}
 
 func (f fakeCmd) Stderr(stderr io.Writer) {}
 
+func (f fakeCmd) Process() *os.Process { return nil }
+
 // fakeInfo is a mock os.FileInfo.
 type fakeInfo struct {
 	name string

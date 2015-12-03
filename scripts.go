@@ -1,7 +1,6 @@
 package git
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"strings"
@@ -51,33 +50,6 @@ func Init() error {
 		}
 	}
 	return nil
-}
-
-// runCmd is a helper function to run commands.
-// It runs command with args from directory at dir.
-// The executed process outputs to os.Stderr
-func runCmd(command string, args []string, dir string) error {
-	cmd := gos.Command(command, args...)
-	cmd.Stdout(os.Stderr)
-	cmd.Stderr(os.Stderr)
-	cmd.Dir(dir)
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-	return cmd.Wait()
-}
-
-// runCmdOutput is a helper function to run commands and return output.
-// It runs command with args from directory at dir.
-// If successful, returns output and nil error
-func runCmdOutput(command string, args []string, dir string) (string, error) {
-	cmd := gos.Command(command, args...)
-	cmd.Dir(dir)
-	var err error
-	if output, err := cmd.Output(); err == nil {
-		return string(bytes.TrimSpace(output)), nil
-	}
-	return "", err
 }
 
 // writeScriptFile writes content to a temporary file.

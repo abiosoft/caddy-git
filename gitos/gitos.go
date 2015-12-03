@@ -56,6 +56,9 @@ type Cmd interface {
 
 	// Stderr sets the process's standard output.
 	Stderr(io.Writer)
+
+	// Process is the underlying process, once started.
+	Process() *os.Process
 }
 
 // gitCmd represents external commands executed by git.
@@ -81,6 +84,10 @@ func (g *gitCmd) Stdout(stdout io.Writer) {
 // Stderr sets the process's standard output.
 func (g *gitCmd) Stderr(stderr io.Writer) {
 	g.Cmd.Stderr = stderr
+}
+
+func (g *gitCmd) Process() *os.Process {
+	return g.Cmd.Process
 }
 
 // OS is an abstraction for required OS level functions.

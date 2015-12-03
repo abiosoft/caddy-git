@@ -10,7 +10,6 @@ import (
 
 type GenericHook struct{}
 
-
 type gPush struct {
 	Ref string `json:"ref"`
 }
@@ -34,10 +33,8 @@ func (g GenericHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) 
 		return http.StatusBadRequest, err
 	}
 
-
 	return http.StatusOK, nil
 }
-
 
 func (g GenericHook) handlePush(body []byte, repo *Repo) error {
 	var push gPush

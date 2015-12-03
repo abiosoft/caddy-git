@@ -40,7 +40,7 @@ type Repo struct {
 	Branch     string        // Git branch
 	KeyPath    string        // Path to private ssh key
 	Interval   time.Duration // Interval between pulls
-	Then       []string      // Commands to execute after successful git pull
+	Then       []Then        // Commands to execute after successful git pull
 	pulled     bool          // true if there was a successful pull
 	lastPull   time.Time     // time of the last successful pull
 	lastCommit string        // hash for the most recent commit
@@ -282,14 +282,9 @@ func (r *Repo) originURL() (string, error) {
 func (r *Repo) execThen() error {
 	var errs error
 	for _, command := range r.Then {
-		c, args, err := middleware.SplitCommandAndArgs(command)
-		if err != nil {
-			errs = mergeErrors(errs, err)
-			continue
-		}
-
-		if err = runCmd(c, args, r.Path); err == nil {
-			Logger().Printf("Command %v successful.\n", command)
+		err := command.Exec()
+		if err == nil {
+			Logger().Printf("Command %v successful.\n", command.Command())
 		}
 		errs = mergeErrors(errs, err)
 	}

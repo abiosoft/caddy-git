@@ -79,13 +79,13 @@ func TestGit(t *testing.T) {
 		output string
 	}{
 		{
-			&Repo{Path: "gitdir", URL: "git@github.com:user/repo.git", KeyPath: "~/.key", Then: []string{"echo Hello"}},
+			&Repo{Path: "gitdir", URL: "git@github.com:user/repo.git", KeyPath: "~/.key", Then: []Then{NewThen("echo", "Hello")}},
 			`git@github.com:user/repo.git pulled.
 Command echo Hello successful.
 `,
 		},
 		{
-			&Repo{Path: "gitdir", URL: "https://github.com/user/repo.git", Then: []string{"echo Hello"}},
+			&Repo{Path: "gitdir", URL: "https://github.com/user/repo.git", Then: []Then{NewThen("echo", "Hello")}},
 			`https://github.com/user/repo.git pulled.
 Command echo Hello successful.
 `,
@@ -118,7 +118,7 @@ Command echo Hello successful.
 	// pull with error
 	repos = []*Repo{
 		&Repo{Path: "gitdir", URL: "http://github.com:u/repo.git"},
-		&Repo{Path: "gitdir", URL: "https://github.com/user/repo.git", Then: []string{"echo Hello"}},
+		&Repo{Path: "gitdir", URL: "https://github.com/user/repo.git", Then: []Then{NewThen("echo", "Hello")}},
 		&Repo{Path: "gitdir"},
 		&Repo{Path: "gitdir", KeyPath: ".key"},
 	}

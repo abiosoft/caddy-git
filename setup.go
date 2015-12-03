@@ -129,13 +129,20 @@ func parse(c *setup.Controller) (Git, error) {
 				if c.NextArg() {
 					repo.HookSecret = c.Val()
 				}
-
 			case "then":
-				thenArgs := c.RemainingArgs()
-				if len(thenArgs) == 0 {
+				if !c.NextArg() {
 					return nil, c.ArgErr()
 				}
-				repo.Then = append(repo.Then, strings.Join(thenArgs, " "))
+				command := c.Val()
+				args := c.RemainingArgs()
+				repo.Then = append(repo.Then, NewThen(command, args...))
+			case "then_long":
+				if !c.NextArg() {
+					return nil, c.ArgErr()
+				}
+				command := c.Val()
+				args := c.RemainingArgs()
+				repo.Then = append(repo.Then, NewLongThen(command, args...))
 			default:
 				return nil, c.ArgErr()
 			}
