@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"os"
 	"strings"
+	"sync"
 )
 
 // Then is the command executed after successful pull.
 type Then interface {
 	Command() string
-	Exec() error
+	Exec(string) error
 }
 
 type gitCmd struct {
@@ -18,6 +19,10 @@ type gitCmd struct {
 	dir        string
 	background bool
 	process    *os.Process
+
+	haltChan   chan struct{}
+	monitoring bool
+	sync.RWMutex
 }
 
 // Command returns the full command as configured in Caddyfile
@@ -26,31 +31,103 @@ func (g *gitCmd) Command() string {
 }
 
 // Exec executes the command initiated in GitCmd
-func (g *gitCmd) Exec() error {
+func (g *gitCmd) Exec(dir string) error {
+	g.dir = dir
 	if g.background {
-		return g.execBackground()
+		return g.execBackground(dir)
 	}
-	return g.exec()
+	return g.exec(dir)
 }
 
-func (g *gitCmd) exec() error {
-	return runCmd(g.command, g.args, g.dir)
+func (g *gitCmd) restart() {
+	err := g.Exec(g.dir)
+	if err == nil {
+		Logger().Printf("Restart successful for %v.\n", g.Command())
+	} else {
+		Logger().Printf("Restart failed for %v.\n", g.Command())
+	}
 }
 
-func (g *gitCmd) execBackground() error {
+func (g *gitCmd) exec(dir string) error {
+	return runCmd(g.command, g.args, dir)
+}
+
+func (g *gitCmd) execBackground(dir string) error {
 	// if existing process is running, kill it.
 	if g.process != nil {
-		if err := g.process.Kill(); err != nil {
-			Logger().Printf("Could not terminate running command %v\n", g.command)
-		} else {
-			Logger().Printf("Running command %v terminated.\n", g.command)
-		}
+		g.killProcess()
 	}
-	process, err := runCmdBackground(g.command, g.args, g.dir)
+	process, err := runCmdBackground(g.command, g.args, dir)
 	if err == nil {
 		g.process = process
+		g.monitorProcess()
 	}
 	return err
+}
+
+func (g *gitCmd) monitorProcess() {
+	g.RLock()
+	if g.process == nil {
+		g.RUnlock()
+		return
+	}
+	monitoring := g.monitoring
+	g.RUnlock()
+
+	if monitoring {
+		return
+	}
+
+	type resp struct {
+		state *os.ProcessState
+		err   error
+	}
+
+	respChan := make(chan resp)
+
+	go func() {
+		p, err := g.process.Wait()
+		respChan <- resp{p, err}
+	}()
+
+	go func() {
+		g.Lock()
+		g.monitoring = true
+		g.Unlock()
+
+		select {
+		case <-g.haltChan:
+			g.killProcess()
+		case r := <-respChan:
+			if r.err != nil || !r.state.Success() {
+				Logger().Printf("Command %v terminated with error, attempting restart...\n", g.Command())
+
+				g.Lock()
+				g.process = nil
+				g.monitoring = false
+				g.Unlock()
+
+				g.restart()
+			} else {
+				g.Lock()
+				g.process = nil
+				g.monitoring = false
+				g.Unlock()
+			}
+		}
+	}()
+
+}
+
+func (g *gitCmd) killProcess() {
+	if err := g.process.Kill(); err != nil {
+		Logger().Printf("Could not terminate running command %v\n", g.command)
+	} else {
+		Logger().Printf("Running command %v terminated.\n", g.command)
+	}
+	g.Lock()
+	g.process = nil
+	g.Unlock()
 }
 
 // NewThen creates a new Then command.
@@ -60,7 +137,7 @@ func NewThen(command string, args ...string) Then {
 
 // NewLongThen creates a new long running Then comand.
 func NewLongThen(command string, args ...string) Then {
-	return &gitCmd{command: command, args: args, background: true}
+	return &gitCmd{command: command, args: args, background: true, haltChan: make(chan struct{})}
 }
 
 // runCmd is a helper function to run commands.

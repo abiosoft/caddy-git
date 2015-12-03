@@ -282,7 +282,7 @@ func (r *Repo) originURL() (string, error) {
 func (r *Repo) execThen() error {
 	var errs error
 	for _, command := range r.Then {
-		err := command.Exec()
+		err := command.Exec(r.Path)
 		if err == nil {
 			Logger().Printf("Command %v successful.\n", command.Command())
 		}
