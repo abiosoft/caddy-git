@@ -14,6 +14,16 @@ type Then interface {
 	Exec(string) error
 }
 
+// NewThen creates a new Then command.
+func NewThen(command string, args ...string) Then {
+	return &gitCmd{command: command, args: args}
+}
+
+// NewLongThen creates a new long running Then comand.
+func NewLongThen(command string, args ...string) Then {
+	return &gitCmd{command: command, args: args, background: true, haltChan: make(chan struct{})}
+}
+
 type gitCmd struct {
 	command    string
 	args       []string
@@ -160,16 +170,6 @@ func (g *gitCmd) haltProcess() {
 	if monitoring {
 		g.haltChan <- struct{}{}
 	}
-}
-
-// NewThen creates a new Then command.
-func NewThen(command string, args ...string) Then {
-	return &gitCmd{command: command, args: args}
-}
-
-// NewLongThen creates a new long running Then comand.
-func NewLongThen(command string, args ...string) Then {
-	return &gitCmd{command: command, args: args, background: true, haltChan: make(chan struct{})}
 }
 
 // runCmd is a helper function to run commands.
