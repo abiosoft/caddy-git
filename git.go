@@ -284,7 +284,7 @@ func (r *Repo) execThen() error {
 	for _, command := range r.Then {
 		err := command.Exec(r.Path)
 		if err == nil {
-			Logger().Printf("Command %v successful.\n", command.Command())
+			Logger().Printf("Command '%v' successful.\n", command.Command())
 		}
 		errs = mergeErrors(errs, err)
 	}

@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Then is the command executed after successful pull.
@@ -32,20 +33,24 @@ func (g *gitCmd) Command() string {
 
 // Exec executes the command initiated in GitCmd
 func (g *gitCmd) Exec(dir string) error {
+	g.Lock()
 	g.dir = dir
+	g.Unlock()
+
 	if g.background {
 		return g.execBackground(dir)
 	}
 	return g.exec(dir)
 }
 
-func (g *gitCmd) restart() {
+func (g *gitCmd) restart() error {
 	err := g.Exec(g.dir)
 	if err == nil {
-		Logger().Printf("Restart successful for %v.\n", g.Command())
+		Logger().Printf("Restart successful for '%v'.\n", g.Command())
 	} else {
-		Logger().Printf("Restart failed for %v.\n", g.Command())
+		Logger().Printf("Restart failed for '%v'.\n", g.Command())
 	}
+	return err
 }
 
 func (g *gitCmd) exec(dir string) error {
@@ -54,12 +59,17 @@ func (g *gitCmd) exec(dir string) error {
 
 func (g *gitCmd) execBackground(dir string) error {
 	// if existing process is running, kill it.
+	g.RLock()
 	if g.process != nil {
-		g.killProcess()
+		g.haltProcess()
 	}
+	g.RUnlock()
+
 	process, err := runCmdBackground(g.command, g.args, dir)
 	if err == nil {
+		g.Lock()
 		g.process = process
+		g.Unlock()
 		g.monitorProcess()
 	}
 	return err
@@ -100,14 +110,24 @@ func (g *gitCmd) monitorProcess() {
 			g.killProcess()
 		case r := <-respChan:
 			if r.err != nil || !r.state.Success() {
-				Logger().Printf("Command %v terminated with error, attempting restart...\n", g.Command())
+				Logger().Printf("Command '%v' terminated with error", g.Command())
 
 				g.Lock()
 				g.process = nil
 				g.monitoring = false
 				g.Unlock()
 
-				g.restart()
+				for i := 0; ; i++ {
+					if i >= numRetries {
+						Logger().Printf("Restart failed after 3 attempts for '%v'. Ignoring...\n", g.Command())
+						break
+					}
+					Logger().Printf("Attempting restart %v of %v for '%v'\n", i+1, numRetries, g.Command())
+					if g.restart() == nil {
+						break
+					}
+					time.Sleep(time.Second * 5)
+				}
 			} else {
 				g.Lock()
 				g.process = nil
@@ -120,14 +140,26 @@ func (g *gitCmd) monitorProcess() {
 }
 
 func (g *gitCmd) killProcess() {
-	if err := g.process.Kill(); err != nil {
-		Logger().Printf("Could not terminate running command %v\n", g.command)
-	} else {
-		Logger().Printf("Running command %v terminated.\n", g.command)
-	}
 	g.Lock()
+	if err := g.process.Kill(); err != nil {
+		Logger().Printf("Could not terminate running command '%v'\n", g.command)
+	} else {
+		Logger().Printf("Command '%v' terminated from within.\n", g.command)
+	}
 	g.process = nil
+	g.monitoring = false
 	g.Unlock()
+}
+
+// haltProcess halts the running process
+func (g *gitCmd) haltProcess() {
+	g.RLock()
+	monitoring := g.monitoring
+	g.RUnlock()
+
+	if monitoring {
+		g.haltChan <- struct{}{}
+	}
 }
 
 // NewThen creates a new Then command.
