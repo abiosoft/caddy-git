@@ -1,6 +1,7 @@
 package git
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/mholt/caddy/middleware"
@@ -59,6 +60,9 @@ func (h WebHook) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) 
 
 			// if handler type is specified.
 			if handler, ok := handlers[repo.Hook.Type]; ok {
+				if !handler.DoesHandle(r.Header) {
+					return http.StatusBadRequest, errors.New(http.StatusText(http.StatusBadRequest))
+				}
 				return handler.Handle(w, r, repo)
 			}
 
