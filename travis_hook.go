@@ -20,7 +20,7 @@ func (t TravisHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (
 	if r.Method != "POST" {
 		return http.StatusMethodNotAllowed, errors.New("the request had an invalid method")
 	}
-	if err := t.handleSignature(r, repo.HookSecret); err != nil {
+	if err := t.handleSignature(r, repo.Hook.Secret); err != nil {
 		return http.StatusBadRequest, err
 	}
 	if err := r.ParseForm(); err != nil {
