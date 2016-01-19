@@ -24,6 +24,7 @@ var handlers = []hookHandler{
 	GithubHook{},
 	GitlabHook{},
 	BitbucketHook{},
+	TravisHook{},
 	GenericHook{},
 }
 
