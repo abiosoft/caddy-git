@@ -35,6 +35,7 @@ var handlers = map[string]hookHandler{
 	"gitlab":    GitlabHook{},
 	"bitbucket": BitbucketHook{},
 	"generic":   GenericHook{},
+	"travis":    TravisHook{},
 }
 
 // defaultHandlers is the list of handlers to choose from
@@ -43,6 +44,7 @@ var defaultHandlers = []hookHandler{
 	GithubHook{},
 	GitlabHook{},
 	BitbucketHook{},
+	TravisHook{},
 }
 
 // registerHandler registers hook handler.
