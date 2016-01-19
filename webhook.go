@@ -47,12 +47,6 @@ var defaultHandlers = []hookHandler{
 	TravisHook{},
 }
 
-// registerHandler registers hook handler.
-// call on init() to register hook handler.
-func registerHandler(name string, handler hookHandler) {
-	handlers[name] = handler
-}
-
 // ServeHTTP implements the middlware.Handler interface.
 func (h WebHook) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 
