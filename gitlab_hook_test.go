@@ -8,7 +8,7 @@ import (
 )
 
 func TestGitlabDeployPush(t *testing.T) {
-	repo := &Repo{Branch: "master", HookUrl: "/gitlab_deploy"}
+	repo := &Repo{Branch: "master", Hook: HookConfig{Url: "/gitlab_deploy"}}
 	glHook := GitlabHook{}
 
 	for i, test := range []struct {

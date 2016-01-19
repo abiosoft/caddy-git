@@ -18,7 +18,7 @@ func (t TravisHook) DoesHandle(h http.Header) bool {
 
 func (t TravisHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (int, error) {
 	if r.Method != "POST" {
-		return http.StatusMethodNotAllowed, errors.New("the request had an invalid method.")
+		return http.StatusMethodNotAllowed, errors.New("the request had an invalid method")
 	}
 	if err := t.handleSignature(r, repo.HookSecret); err != nil {
 		return http.StatusBadRequest, err
@@ -45,6 +45,9 @@ func (t TravisHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (
 	if err := repo.Pull(); err != nil {
 		return http.StatusInternalServerError, err
 	}
+	if err := repo.checkoutCommit(data.Commit); err != nil {
+		return http.StatusInternalServerError, err
+	}
 	return 200, nil
 }
 
@@ -62,6 +65,7 @@ type travisPayload struct {
 	Branch        string    `json:"branch"`
 	Type          string    `json:"type"`
 	State         string    `json:"state"`
+	Commit        string    `json:"commit"`
 }
 
 // Check for an authorization signature in the request. Reject if not present. If validation required, check the sha

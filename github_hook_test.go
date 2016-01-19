@@ -8,7 +8,7 @@ import (
 )
 
 func TestGithubDeployPush(t *testing.T) {
-	repo := &Repo{Branch: "master", HookUrl: "/github_deploy", HookSecret: "supersecret"}
+	repo := &Repo{Branch: "master", Hook: HookConfig{ Url: "/github_deploy", Secret: "supersecret"} }
 	ghHook := GithubHook{}
 
 	for i, test := range []struct {

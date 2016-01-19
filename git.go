@@ -45,9 +45,8 @@ type Repo struct {
 	lastPull   time.Time     // time of the last successful pull
 	lastCommit string        // hash for the most recent commit
 	sync.Mutex
-	latestTag  string // latest tag name
-	HookUrl    string // url to listen on for webhooks
-	HookSecret string // secret to validate hooks
+	latestTag string     // latest tag name
+	Hook      HookConfig // Webhook configuration
 
 }
 
@@ -160,6 +159,16 @@ func (r *Repo) checkoutLatestTag() error {
 	return err
 }
 
+// checkoutCommit checks out the specified commitHash.
+func (r *Repo) checkoutCommit(commitHash string) error {
+	var err error
+	params := []string{"checkout", commitHash}
+	if err = r.gitCmd(params, r.Path); err == nil {
+		Logger().Printf("Commit %v checkout done.\n", commitHash)
+	}
+	return err
+}
+
 // gitCmd performs a git command.
 func (r *Repo) gitCmd(params []string, dir string) error {
 	// if key is specified, use ssh key
@@ -190,7 +199,7 @@ func (r *Repo) gitCmdWithKey(params []string, dir string) error {
 		return err
 	}
 
-	// write git clone bash script to file
+	// write git bash script to file
 	script, err = writeScriptFile(bashScript(gitSSH.Name(), r, params))
 	if err != nil {
 		return err

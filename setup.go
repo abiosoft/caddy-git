@@ -38,7 +38,7 @@ func Setup(c *setup.Controller) (middleware.Middleware, error) {
 
 		// If a HookUrl is set, we switch to event based pulling.
 		// Install the url handler
-		if repo.HookUrl != "" {
+		if repo.Hook.Url != "" {
 
 			hookRepos = append(hookRepos, repo)
 
@@ -128,12 +128,21 @@ func parse(c *setup.Controller) (Git, error) {
 				if !c.NextArg() {
 					return nil, c.ArgErr()
 				}
-				repo.HookUrl = c.Val()
+				repo.Hook.Url = c.Val()
 
 				// optional secret for validation
 				if c.NextArg() {
-					repo.HookSecret = c.Val()
+					repo.Hook.Secret = c.Val()
 				}
+			case "hook_type":
+				if !c.NextArg() {
+					return nil, c.ArgErr()
+				}
+				t := c.Val()
+				if _, ok := handlers[t]; !ok {
+					return nil, c.Errf("invalid hook type %v", t)
+				}
+				repo.Hook.Type = t
 			case "then":
 				if !c.NextArg() {
 					return nil, c.ArgErr()

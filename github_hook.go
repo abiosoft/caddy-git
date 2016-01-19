@@ -43,7 +43,7 @@ func (g GithubHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (
 	// read full body - required for signature
 	body, err := ioutil.ReadAll(r.Body)
 
-	err = g.handleSignature(r, body, repo.HookSecret)
+	err = g.handleSignature(r, body, repo.Hook.Secret)
 	if err != nil {
 		return http.StatusBadRequest, err
 	}

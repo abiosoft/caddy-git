@@ -8,7 +8,7 @@ import (
 )
 
 func TestBitbucketDeployPush(t *testing.T) {
-	repo := &Repo{Branch: "master", HookUrl: "/bitbucket_deploy"}
+	repo := &Repo{Branch: "master", Hook: HookConfig{Url: "/bitbucket_deploy"}}
 	bbHook := BitbucketHook{}
 
 	for i, test := range []struct {
