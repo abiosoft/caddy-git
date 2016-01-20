@@ -22,6 +22,7 @@ func TestBitbucketDeployPush(t *testing.T) {
 		{"131.103.20.160", "", "", "", 400},
 		{"131.103.20.160", "", "repo:push", "", 400},
 		{"131.103.20.160", pushBBBodyValid, "repo:push", "", 200},
+		{"131.103.20.165", pushBBBodyValid, "repo:push", "", 200},
 		{"131.103.20.160", pushBBBodyEmptyBranch, "repo:push", "", 400},
 		{"131.103.20.160", pushBBBodyDeleteBranch, "repo:push", "", 400},
 	} {

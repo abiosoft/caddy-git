@@ -1,0 +1,5 @@
+{
+  "directive": "git",
+  "after": "shutdown",
+  "source": "github.com/abiosoft/caddy-git"
+}

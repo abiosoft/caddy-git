@@ -2,7 +2,7 @@
 
 Middleware for [Caddy](https://caddyserver.com).
 
-[![Build Status](https://img.shields.io/travis/abiosoft/caddy-git.svg?style=flat-square)](https://travis-ci.org/abiosoft/caddy-git)
+[![Build Status](https://travis-ci.org/abiosoft/caddy-git.svg?branch=master)](https://travis-ci.org/abiosoft/caddy-git)
 
 git clones a git repository into the site. This makes it possible to deploy your site with a simple git push.
 
@@ -108,4 +108,6 @@ Generic webhook payload: `<branch>` is branch name e.g. `master`.
 	"ref" : "refs/heads/<branch>"
 }
 ```
+### Build from source
+Check instructions for building from source here [BUILDING.md](https://github.com/abiosoft/caddy-git/blob/master/BUILDING.md)
 
