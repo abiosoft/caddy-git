@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"strings"
 )
 
 // See: https://confluence.atlassian.com/bitbucket/manage-webhooks-735643732.html
@@ -96,8 +97,13 @@ func (b BitbucketHook) handlePush(body []byte, repo *Repo) error {
 	return nil
 }
 
+func cleanRemoteIP(remoteIP string) string {
+	// *httpRequest.RemoteAddr comes in format IP:PORT, remove the port
+	return strings.Split(remoteIP, ":")[0]
+}
+
 func (b BitbucketHook) verifyBitbucketIP(remoteIP string) bool {
-	ipAddress := net.ParseIP(remoteIP)
+	ipAddress := net.ParseIP(cleanRemoteIP(remoteIP))
 	for _, cidr := range bitbucketIPBlocks {
 		_, cidrnet, err := net.ParseCIDR(cidr)
 		if err != nil {
