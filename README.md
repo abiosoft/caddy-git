@@ -101,6 +101,8 @@ git git@github.com:user/site {
 }
 ```
 
+You might need quotes `"secret-password"` around your secret if it contains any special characters, or you get an error.
+
 <a name="generic_format"></a>
 Generic webhook payload: `<branch>` is branch name e.g. `master`.
 ```
