@@ -66,7 +66,7 @@ func TestIntervals(t *testing.T) {
 
 		// if greater than minimum interval
 		if repo.Interval >= time.Second*5 {
-			expected := `https://github.com/user/repo.git pulled.
+			expected := `https://git@github.com/user/repo.git pulled.
 No new changes.`
 
 			// ensure pull is done by tracing the output
@@ -94,14 +94,16 @@ func TestGitParse(t *testing.T) {
 		expected  *Repo
 	}{
 		{`git git@github.com:user/repo`, false, &Repo{
-			URL: "https://github.com/user/repo.git",
+			URL: "https://git@github.com/user/repo.git",
 		}},
 		{`git github.com/user/repo`, false, &Repo{
 			URL: "https://github.com/user/repo.git",
 		}},
-		{`git git@github.com/user/repo`, true, nil},
+		{`git git@github.com/user/repo`, false, &Repo{
+			URL: "https://git@github.com/user/repo.git",
+		}},
 		{`git http://github.com/user/repo`, false, &Repo{
-			URL: "https://github.com/user/repo.git",
+			URL: "http://github.com/user/repo.git",
 		}},
 		{`git https://github.com/user/repo`, false, &Repo{
 			URL: "https://github.com/user/repo.git",
@@ -144,7 +146,7 @@ func TestGitParse(t *testing.T) {
 		branch dev
 		}`, false, &Repo{
 			Branch: "dev",
-			URL:    "https://github.com/user/repo.git",
+			URL:    "https://git@github.com/user/repo.git",
 		}},
 		{`git {
 		key ~/.key
@@ -165,13 +167,25 @@ func TestGitParse(t *testing.T) {
 			key ~/.key
 		}`, false, &Repo{
 			KeyPath: "~/.key",
-			URL:     "git@bitbucket.org:user/repo.git",
+			URL:     "user@bitbucket.org:user/repo.git",
 		}},
 		{`git git@bitbucket.org:user/repo.git {
 			key ~/.key
 		}`, false, &Repo{
 			KeyPath: "~/.key",
 			URL:     "git@bitbucket.org:user/repo.git",
+		}},
+		{`git ssh://git@bitbucket.org:user/repo.git {
+			key ~/.key
+		}`, false, &Repo{
+			KeyPath: "~/.key",
+			URL:     "git@bitbucket.org:user/repo.git",
+		}},
+		{`git git@bitbucket.org:2222/user/repo.git {
+			key ~/.key
+		}`, false, &Repo{
+			KeyPath: "~/.key",
+			URL:     "ssh://git@bitbucket.org:2222/user/repo.git",
 		}},
 	}
 
