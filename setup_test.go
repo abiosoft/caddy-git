@@ -105,6 +105,9 @@ func TestGitParse(t *testing.T) {
 		{`git http://github.com/user/repo`, false, &Repo{
 			URL: "http://github.com/user/repo.git",
 		}},
+		{`git http://github.com:8888/user/repo`, false, &Repo{
+			URL: "http://github.com:8888/user/repo.git",
+		}},
 		{`git https://github.com/user/repo`, false, &Repo{
 			URL: "https://github.com/user/repo.git",
 		}},

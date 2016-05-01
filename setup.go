@@ -253,8 +253,11 @@ func sanitizeHTTP(repoURL string) (string, string, error) {
 	// convert to http format if in ssh format
 	if strings.Contains(u.Host, ":") {
 		s := strings.SplitN(u.Host, ":", 2)
-		u.Host = s[0]
-		u.Path = path.Join(s[1], u.Path)
+		//  alter path and host if we're sure its not a port
+		if _, err := strconv.Atoi(s[1]); err != nil {
+			u.Host = s[0]
+			u.Path = path.Join(s[1], u.Path)
+		}
 	}
 
 	// Bitbucket require the user to be set into the HTTP URL
