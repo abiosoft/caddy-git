@@ -36,6 +36,7 @@ var handlers = map[string]hookHandler{
 	"bitbucket": BitbucketHook{},
 	"generic":   GenericHook{},
 	"travis":    TravisHook{},
+	"gogs":      GogsHook{},
 }
 
 // defaultHandlers is the list of handlers to choose from
@@ -45,6 +46,7 @@ var defaultHandlers = []hookHandler{
 	GitlabHook{},
 	BitbucketHook{},
 	TravisHook{},
+	GogsHook{},
 }
 
 // ServeHTTP implements the middlware.Handler interface.
