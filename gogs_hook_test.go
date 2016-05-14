@@ -9,7 +9,7 @@ import (
 
 func TestGogsDeployPush(t *testing.T) {
 	repo := &Repo{Branch: "master", Hook: HookConfig{Url: "/gogs_deploy"}}
-	ghHook := GogsHook{}
+	gsHook := GogsHook{}
 
 	for i, test := range []struct {
 		body         string
@@ -19,8 +19,8 @@ func TestGogsDeployPush(t *testing.T) {
 	}{
 		{"", "", "", 400},
 		{"", "push", "", 400},
-		{pushBodyOther, "push", "", 200},
-		{pushBodyPartial, "push", "", 400},
+		{pushGSBodyOther, "push", "", 200},
+		{pushGSBodyPartial, "push", "", 400},
 		{"", "ping", "pong", 200},
 	} {
 
@@ -35,7 +35,7 @@ func TestGogsDeployPush(t *testing.T) {
 
 		rec := httptest.NewRecorder()
 
-		code, err := ghHook.Handle(rec, req, repo)
+		code, err := gsHook.Handle(rec, req, repo)
 
 		if code != test.code {
 			t.Errorf("Test %d: Expected response code to be %d but was %d", i, test.code, code)
@@ -48,13 +48,13 @@ func TestGogsDeployPush(t *testing.T) {
 
 }
 
-var pushBodyPartial = `
+var pushGSBodyPartial = `
 {
   "ref": ""
 }
 `
 
-var pushBodyOther = `
+var pushGSBodyOther = `
 {
   "ref": "refs/heads/some-other-branch"
 }
