@@ -3,6 +3,7 @@ package git
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -59,8 +60,8 @@ func (b BitbucketHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo
 
 	switch event {
 	case "repo:push":
-		err := b.handlePush(body, repo)
-		if err != nil {
+		err = b.handlePush(body, repo)
+		if !hookIgnored(err) && err != nil {
 			return http.StatusBadRequest, err
 		}
 	default:
@@ -68,7 +69,7 @@ func (b BitbucketHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo
 		return http.StatusBadRequest, nil
 	}
 
-	return http.StatusOK, nil
+	return http.StatusOK, err
 }
 
 func (b BitbucketHook) handlePush(body []byte, repo *Repo) error {
@@ -89,10 +90,11 @@ func (b BitbucketHook) handlePush(body []byte, repo *Repo) error {
 	}
 
 	branch := change.New.Name
-	if branch == repo.Branch {
-		Logger().Print("Received pull notification for the tracking branch, updating...\n")
-		repo.Pull()
+	if branch != repo.Branch {
+		return hookIgnoredError{hookType: hookName(b), err: fmt.Errorf("found different branch %v", branch)}
 	}
+	Logger().Print("Received pull notification for the tracking branch, updating...\n")
+	repo.Pull()
 
 	return nil
 }

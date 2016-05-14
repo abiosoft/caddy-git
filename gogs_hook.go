@@ -3,6 +3,7 @@ package git
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -45,8 +46,8 @@ func (g GogsHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (in
 	case "ping":
 		w.Write([]byte("pong"))
 	case "push":
-		err := g.handlePush(body, repo)
-		if err != nil {
+		err = g.handlePush(body, repo)
+		if !hookIgnored(err) && err != nil {
 			return http.StatusBadRequest, err
 		}
 
@@ -56,7 +57,7 @@ func (g GogsHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (in
 		return http.StatusBadRequest, nil
 	}
 
-	return http.StatusOK, nil
+	return http.StatusOK, err
 }
 
 func (g GogsHook) handlePush(body []byte, repo *Repo) error {
@@ -75,10 +76,12 @@ func (g GogsHook) handlePush(body []byte, repo *Repo) error {
 	}
 
 	branch := refSlice[2]
-	if branch == repo.Branch {
-		Logger().Print("Received pull notification for the tracking branch, updating...\n")
-		repo.Pull()
+	if branch != repo.Branch {
+		return hookIgnoredError{hookType: hookName(g), err: fmt.Errorf("found different branch %v", branch)}
 	}
+
+	Logger().Print("Received pull notification for the tracking branch, updating...\n")
+	repo.Pull()
 
 	return nil
 }

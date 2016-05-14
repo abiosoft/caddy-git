@@ -34,14 +34,19 @@ func (t TravisHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (
 	if err := json.Unmarshal([]byte(payload), data); err != nil {
 		return http.StatusBadRequest, err
 	}
+
+	// ignored webhooks
+	err := hookIgnoredError{hookType: hookName(t)}
 	if data.Type != "push" || data.StatusMessage != "Passed" {
-		Logger().Println("Ignoring payload with wrong status or type.")
-		return 200, nil
+		err.err = fmt.Errorf("Ignoring payload with wrong status or type.")
+		return 200, err
 	}
 	if repo.Branch != "" && data.Branch != repo.Branch {
-		Logger().Printf("Ignoring push for branch %s", data.Branch)
-		return 200, nil
+		err.err = fmt.Errorf("Ignoring push for branch %s", data.Branch)
+		return 200, err
 	}
+
+	// attempt pull
 	if err := repo.Pull(); err != nil {
 		return http.StatusInternalServerError, err
 	}

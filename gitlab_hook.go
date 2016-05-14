@@ -3,6 +3,7 @@ package git
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -41,8 +42,8 @@ func (g GitlabHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (
 
 	switch event {
 	case "Push Hook":
-		err := g.handlePush(body, repo)
-		if err != nil {
+		err = g.handlePush(body, repo)
+		if !hookIgnored(err) && err != nil {
 			return http.StatusBadRequest, err
 		}
 
@@ -51,7 +52,7 @@ func (g GitlabHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (
 		return http.StatusBadRequest, nil
 	}
 
-	return http.StatusOK, nil
+	return http.StatusOK, err
 }
 
 func (g GitlabHook) handlePush(body []byte, repo *Repo) error {
@@ -70,10 +71,12 @@ func (g GitlabHook) handlePush(body []byte, repo *Repo) error {
 	}
 
 	branch := refSlice[2]
-	if branch == repo.Branch {
-		Logger().Print("Received pull notification for the tracking branch, updating...\n")
-		repo.Pull()
+	if branch != repo.Branch {
+		return hookIgnoredError{hookType: hookName(g), err: fmt.Errorf("found different branch %v", branch)}
 	}
+
+	Logger().Print("Received pull notification for the tracking branch, updating...\n")
+	repo.Pull()
 
 	return nil
 }

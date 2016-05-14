@@ -226,7 +226,7 @@ func validateUrl(repoUrl string) (string, error) {
 	switch u.Scheme {
 	case "https", "http", "ssh":
 	default:
-		return "", fmt.Errorf("Invalid url scheme %s. If url contains port, ssh scheme is required.", u.Scheme)
+		return "", fmt.Errorf("Invalid url scheme %s. If url contains port, scheme is required.", u.Scheme)
 	}
 
 	if !strings.HasSuffix(u.String(), ".git") {
