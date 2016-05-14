@@ -53,6 +53,7 @@ Each property in the block is optional. The path and repo may be specified on th
 * [gitlab](https://gitlab.com)
 * [bitbucket](https://bitbucket.org)
 * [travis](https://travis-ci.org)
+* [gogs](https://gogs.io)
 * generic
 
 ### Examples
