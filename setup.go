@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mholt/caddy/caddy/setup"
-	"github.com/mholt/caddy/middleware"
+	"github.com/mholt/caddy"
+	"github.com/mholt/caddy/caddyhttp/httpserver"
 )
 
 const (
@@ -20,11 +20,18 @@ const (
 	DefaultInterval time.Duration = time.Hour * 1
 )
 
-// Git configures a new Git service routine.
-func Setup(c *setup.Controller) (middleware.Middleware, error) {
+func init() {
+	caddy.RegisterPlugin("git", caddy.Plugin{
+		ServerType: "http",
+		Action:     setup,
+	})
+}
+
+// setup configures a new Git service routine.
+func setup(c *caddy.Controller) error {
 	git, err := parse(c)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// repos configured with webhooks
@@ -62,7 +69,9 @@ func Setup(c *setup.Controller) (middleware.Middleware, error) {
 	// ensure the functions are executed once per server block
 	// for cases like server1.com, server2.com { ... }
 	c.OncePerServerBlock(func() error {
-		c.Startup = append(c.Startup, startupFuncs...)
+		for i := range startupFuncs {
+			c.OnStartup(startupFuncs[i])
+		}
 		return nil
 	})
 
@@ -70,26 +79,27 @@ func Setup(c *setup.Controller) (middleware.Middleware, error) {
 	// return handler
 	if len(hookRepos) > 0 {
 		webhook := &WebHook{Repos: hookRepos}
-		return func(next middleware.Handler) middleware.Handler {
+		httpserver.GetConfig(c.Key).AddMiddleware(func(next httpserver.Handler) httpserver.Handler {
 			webhook.Next = next
 			return webhook
-		}, err
+		})
 	}
 
-	return nil, err
+	return nil
 }
 
-func parse(c *setup.Controller) (Git, error) {
+func parse(c *caddy.Controller) (Git, error) {
 	var git Git
 
+	config := httpserver.GetConfig(c.Key)
 	for c.Next() {
-		repo := &Repo{Branch: "master", Interval: DefaultInterval, Path: c.Root}
+		repo := &Repo{Branch: "master", Interval: DefaultInterval, Path: config.Root}
 
 		args := c.RemainingArgs()
 
 		switch len(args) {
 		case 2:
-			repo.Path = filepath.Clean(c.Root + string(filepath.Separator) + args[1])
+			repo.Path = filepath.Clean(config.Root + string(filepath.Separator) + args[1])
 			fallthrough
 		case 1:
 			u, err := validateUrl(args[0])
@@ -114,7 +124,7 @@ func parse(c *setup.Controller) (Git, error) {
 				if !c.NextArg() {
 					return nil, c.ArgErr()
 				}
-				repo.Path = filepath.Clean(c.Root + string(filepath.Separator) + c.Val())
+				repo.Path = filepath.Clean(config.Root + string(filepath.Separator) + c.Val())
 			case "branch":
 				if !c.NextArg() {
 					return nil, c.ArgErr()

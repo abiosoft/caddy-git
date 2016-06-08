@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/abiosoft/caddy-git/gittest"
-	"github.com/mholt/caddy/caddy/setup"
+	"github.com/mholt/caddy"
 )
 
 // init sets the OS used to fakeOS
@@ -17,13 +17,9 @@ func init() {
 }
 
 func TestGitSetup(t *testing.T) {
-	c := setup.NewTestController(`git git@github.com:mholt/caddy.git`)
-
-	mid, err := Setup(c)
+	c := caddy.NewTestController(`git git@github.com:mholt/caddy.git`)
+	err := setup(c)
 	check(t, err)
-	if mid != nil {
-		t.Fatal("Git middleware is a background service and expected to be nil.")
-	}
 }
 
 func TestIntervals(t *testing.T) {
@@ -37,17 +33,22 @@ func TestIntervals(t *testing.T) {
 
 	for i, test := range tests {
 		SetLogger(gittest.NewLogger(gittest.Open("file")))
-		c1 := setup.NewTestController(test)
+		c1 := caddy.NewTestController(test)
 		git, err := parse(c1)
 		check(t, err)
 		repo := git.Repo(0)
 
-		c2 := setup.NewTestController(test)
-		_, err = Setup(c2)
+		c2 := caddy.NewTestController(test)
+		err = setup(c2)
 		check(t, err)
 
 		// start startup services
-		err = c2.Startup[0]()
+		err = func() error {
+			// Start service routine in background
+			Start(repo)
+			// Do a pull right away to return error
+			return repo.Pull()
+		}()
 		check(t, err)
 
 		// wait for first background pull
@@ -193,7 +194,7 @@ func TestGitParse(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		c := setup.NewTestController(test.input)
+		c := caddy.NewTestController(test.input)
 		git, err := parse(c)
 		if !test.shouldErr && err != nil {
 			t.Errorf("Test %v should not error but found %v", i, err)

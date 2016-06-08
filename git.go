@@ -1,7 +1,6 @@
 package git
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -9,7 +8,7 @@ import (
 	"time"
 
 	"github.com/abiosoft/caddy-git/gitos"
-	"github.com/mholt/caddy/middleware"
+	"github.com/mholt/caddy"
 )
 
 const (
@@ -245,14 +244,14 @@ func (r *Repo) Prepare() error {
 		}
 		return fmt.Errorf("another git repo '%v' exists at %v", repoURL, r.Path)
 	}
-	return fmt.Errorf("cannot git clone into %v, directory not empty.", r.Path)
+	return fmt.Errorf("cannot git clone into %v, directory not empty", r.Path)
 }
 
 // getMostRecentCommit gets the hash of the most recent commit to the
 // repository. Useful for checking if changes occur.
 func (r *Repo) mostRecentCommit() (string, error) {
 	command := gitBinary + ` --no-pager log -n 1 --pretty=format:"%H"`
-	c, args, err := middleware.SplitCommandAndArgs(command)
+	c, args, err := caddy.SplitCommandAndArgs(command)
 	if err != nil {
 		return "", err
 	}
@@ -269,7 +268,7 @@ func (r *Repo) fetchLatestTag() (string, error) {
 	}
 	// retrieve latest tag
 	command := gitBinary + ` describe origin --abbrev=0 --tags`
-	c, args, err := middleware.SplitCommandAndArgs(command)
+	c, args, err := caddy.SplitCommandAndArgs(command)
 	if err != nil {
 		return "", err
 	}
@@ -311,7 +310,7 @@ func mergeErrors(errs ...error) error {
 			continue
 		}
 		if e != nil {
-			err = errors.New(fmt.Sprintf("%v\n%v", err.Error(), e.Error()))
+			err = fmt.Errorf("%v\n%v", err.Error(), e.Error())
 		}
 	}
 	return err

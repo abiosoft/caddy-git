@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/mholt/caddy/middleware"
+	"github.com/mholt/caddy/caddyhttp/httpserver"
 )
 
-// Middleware for handling web hooks of git providers
+// WebHook is middleware for handling web hooks of git providers
 type WebHook struct {
 	Repos []*Repo
-	Next  middleware.Handler
+	Next  httpserver.Handler
 }
 
 // HookConfig is a webhook handler configuration.
