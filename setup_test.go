@@ -22,72 +22,6 @@ func TestGitSetup(t *testing.T) {
 	check(t, err)
 }
 
-func TestIntervals(t *testing.T) {
-	tests := []string{
-		`git git@github.com:user/repo { interval 10 }`,
-		`git git@github.com:user/repo { interval 5 }`,
-		`git git@github.com:user/repo { interval 2 }`,
-		`git git@github.com:user/repo { interval 1 }`,
-		`git git@github.com:user/repo { interval 6 }`,
-	}
-
-	for i, test := range tests {
-		SetLogger(gittest.NewLogger(gittest.Open("file")))
-		c1 := caddy.NewTestController(test)
-		git, err := parse(c1)
-		check(t, err)
-		repo := git.Repo(0)
-
-		c2 := caddy.NewTestController(test)
-		err = setup(c2)
-		check(t, err)
-
-		// start startup services
-		err = func() error {
-			// Start service routine in background
-			Start(repo)
-			// Do a pull right away to return error
-			return repo.Pull()
-		}()
-		check(t, err)
-
-		// wait for first background pull
-		gittest.Sleep(time.Millisecond * 100)
-
-		// switch logger to test file
-		logFile := gittest.Open("file")
-		SetLogger(gittest.NewLogger(logFile))
-
-		// sleep for the interval
-		gittest.Sleep(repo.Interval)
-
-		// get log output
-		out, err := ioutil.ReadAll(logFile)
-		check(t, err)
-
-		// if greater than minimum interval
-		if repo.Interval >= time.Second*5 {
-			expected := `https://git@github.com/user/repo.git pulled.
-No new changes.`
-
-			// ensure pull is done by tracing the output
-			if expected != strings.TrimSpace(string(out)) {
-				t.Errorf("Test %v: Expected %v found %v", i, expected, string(out))
-			}
-		} else {
-			// ensure pull is ignored by confirming no output
-			if string(out) != "" {
-				t.Errorf("Test %v: Expected no output but found %v", i, string(out))
-			}
-		}
-
-		// stop background thread monitor
-		Services.Stop(repo.URL, 1)
-
-	}
-
-}
-
 func TestGitParse(t *testing.T) {
 	tests := []struct {
 		input     string
@@ -191,6 +125,41 @@ func TestGitParse(t *testing.T) {
 			KeyPath: "~/.key",
 			URL:     "ssh://git@bitbucket.org:2222/user/repo.git",
 		}},
+		{`git git@bitbucket.org:2222/user/repo.git {
+			key ~/.key
+			hook_type gogs
+		}`, false, &Repo{
+			KeyPath: "~/.key",
+			URL:     "ssh://git@bitbucket.org:2222/user/repo.git",
+			Hook: HookConfig{
+				Type: "gogs",
+			},
+		}},
+		{`git git@bitbucket.org:2222/user/repo.git {
+			key ~/.key
+			hook /webhook
+			hook_type gogs
+		}`, false, &Repo{
+			KeyPath: "~/.key",
+			URL:     "ssh://git@bitbucket.org:2222/user/repo.git",
+			Hook: HookConfig{
+				Url:  "/webhook",
+				Type: "gogs",
+			},
+		}},
+		{`git git@bitbucket.org:2222/user/repo.git {
+			key ~/.key
+			hook /webhook some-secrets
+			hook_type gogs
+		}`, false, &Repo{
+			KeyPath: "~/.key",
+			URL:     "ssh://git@bitbucket.org:2222/user/repo.git",
+			Hook: HookConfig{
+				Url:    "/webhook",
+				Secret: "some-secrets",
+				Type:   "gogs",
+			},
+		}},
 	}
 
 	for i, test := range tests {
@@ -209,6 +178,72 @@ func TestGitParse(t *testing.T) {
 			t.Errorf("Test %v expects %v but found %v", i, test.expected, repo)
 		}
 	}
+}
+
+func TestIntervals(t *testing.T) {
+	tests := []string{
+		`git git@github.com:user/repo { interval 10 }`,
+		`git git@github.com:user/repo { interval 5 }`,
+		`git git@github.com:user/repo { interval 2 }`,
+		`git git@github.com:user/repo { interval 1 }`,
+		`git git@github.com:user/repo { interval 6 }`,
+	}
+
+	for i, test := range tests {
+		SetLogger(gittest.NewLogger(gittest.Open("file")))
+		c1 := caddy.NewTestController(test)
+		git, err := parse(c1)
+		check(t, err)
+		repo := git.Repo(0)
+
+		c2 := caddy.NewTestController(test)
+		err = setup(c2)
+		check(t, err)
+
+		// start startup services
+		err = func() error {
+			// Start service routine in background
+			Start(repo)
+			// Do a pull right away to return error
+			return repo.Pull()
+		}()
+		check(t, err)
+
+		// wait for first background pull
+		gittest.Sleep(time.Millisecond * 100)
+
+		// switch logger to test file
+		logFile := gittest.Open("file")
+		SetLogger(gittest.NewLogger(logFile))
+
+		// sleep for the interval
+		gittest.Sleep(repo.Interval)
+
+		// get log output
+		out, err := ioutil.ReadAll(logFile)
+		check(t, err)
+
+		// if greater than minimum interval
+		if repo.Interval >= time.Second*5 {
+			expected := `https://git@github.com/user/repo.git pulled.
+No new changes.`
+
+			// ensure pull is done by tracing the output
+			if expected != strings.TrimSpace(string(out)) {
+				t.Errorf("Test %v: Expected %v found %v", i, expected, string(out))
+			}
+		} else {
+			// ensure pull is ignored by confirming no output
+			if string(out) != "" {
+				t.Errorf("Test %v: Expected no output but found %v", i, string(out))
+			}
+		}
+
+		// stop background thread monitor
+		Services.Stop(repo.URL, 1)
+
+	}
+
 }
 
 func reposEqual(expected, repo *Repo) bool {
@@ -241,6 +276,9 @@ func reposEqual(expected, repo *Repo) bool {
 		return false
 	}
 	if expected.URL != "" && expected.URL != repo.URL {
+		return false
+	}
+	if fmt.Sprint(expected.Hook) != fmt.Sprint(repo.Hook) {
 		return false
 	}
 	return true

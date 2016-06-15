@@ -102,7 +102,7 @@ func parse(c *caddy.Controller) (Git, error) {
 			repo.Path = filepath.Clean(config.Root + string(filepath.Separator) + args[1])
 			fallthrough
 		case 1:
-			u, err := validateUrl(args[0])
+			u, err := validateURL(args[0])
 			if err != nil {
 				return nil, err
 			}
@@ -115,7 +115,7 @@ func parse(c *caddy.Controller) (Git, error) {
 				if !c.NextArg() {
 					return nil, c.ArgErr()
 				}
-				u, err := validateUrl(c.Val())
+				u, err := validateURL(c.Val())
 				if err != nil {
 					return nil, err
 				}
@@ -194,7 +194,7 @@ func parse(c *caddy.Controller) (Git, error) {
 		if repo.KeyPath == "" {
 			repo.URL, repo.Host, err = sanitizeHTTP(repo.URL)
 		} else {
-			repo.URL, repo.Host, err = sanitizeGit(repo.URL)
+			repo.URL, repo.Host, err = sanitizeSSH(repo.URL)
 			// TODO add Windows support for private repos
 			if runtime.GOOS == "windows" {
 				return nil, fmt.Errorf("private repository not yet supported on Windows")
@@ -222,10 +222,10 @@ func parse(c *caddy.Controller) (Git, error) {
 	return git, nil
 }
 
-// validateUrl validates repoUrl is a valid git url and appends
+// validateURL validates repoUrl is a valid git url and appends
 // with .git if missing.
-func validateUrl(repoUrl string) (string, error) {
-	u, err := url.Parse(repoUrl)
+func validateURL(repoURL string) (string, error) {
+	u, err := url.Parse(repoURL)
 	if err != nil {
 		return "", err
 	}
@@ -279,11 +279,11 @@ func sanitizeHTTP(repoURL string) (string, string, error) {
 	return u.String(), u.Host, nil
 }
 
-// sanitizeGit cleans up repository url and converts to ssh format for private
+// sanitizeSSH cleans up repository url and converts to ssh format for private
 // repositories if required.
 // Returns sanitized url, hostName (e.g. github.com, bitbucket.com)
 // and possible error
-func sanitizeGit(repoURL string) (string, string, error) {
+func sanitizeSSH(repoURL string) (string, string, error) {
 	u, err := url.Parse(repoURL)
 	if err != nil {
 		return "", "", err
