@@ -17,7 +17,7 @@ func init() {
 }
 
 func TestGitSetup(t *testing.T) {
-	c := caddy.NewTestController(`git git@github.com:mholt/caddy.git`)
+	c := caddy.NewTestController("http", `git git@github.com:mholt/caddy.git`)
 	err := setup(c)
 	check(t, err)
 }
@@ -163,7 +163,7 @@ func TestGitParse(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		c := caddy.NewTestController(test.input)
+		c := caddy.NewTestController("http", test.input)
 		git, err := parse(c)
 		if !test.shouldErr && err != nil {
 			t.Errorf("Test %v should not error but found %v", i, err)
@@ -191,12 +191,12 @@ func TestIntervals(t *testing.T) {
 
 	for i, test := range tests {
 		SetLogger(gittest.NewLogger(gittest.Open("file")))
-		c1 := caddy.NewTestController(test)
+		c1 := caddy.NewTestController("http", test)
 		git, err := parse(c1)
 		check(t, err)
 		repo := git.Repo(0)
 
-		c2 := caddy.NewTestController(test)
+		c2 := caddy.NewTestController("http", test)
 		err = setup(c2)
 		check(t, err)
 
