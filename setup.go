@@ -79,7 +79,7 @@ func setup(c *caddy.Controller) error {
 	// return handler
 	if len(hookRepos) > 0 {
 		webhook := &WebHook{Repos: hookRepos}
-		httpserver.GetConfig(c.Key).AddMiddleware(func(next httpserver.Handler) httpserver.Handler {
+		httpserver.GetConfig(c).AddMiddleware(func(next httpserver.Handler) httpserver.Handler {
 			webhook.Next = next
 			return webhook
 		})
@@ -91,7 +91,7 @@ func setup(c *caddy.Controller) error {
 func parse(c *caddy.Controller) (Git, error) {
 	var git Git
 
-	config := httpserver.GetConfig(c.Key)
+	config := httpserver.GetConfig(c)
 	for c.Next() {
 		repo := &Repo{Branch: "master", Interval: DefaultInterval, Path: config.Root}
 
