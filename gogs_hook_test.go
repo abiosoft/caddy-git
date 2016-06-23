@@ -8,7 +8,7 @@ import (
 )
 
 func TestGogsDeployPush(t *testing.T) {
-	repo := &Repo{Branch: "master", Hook: HookConfig{Url: "/gogs_deploy"}}
+	repo := &Repo{Branch: "master", Hook: HookConfig{URL: "/gogs_deploy"}}
 	gsHook := GogsHook{}
 
 	for i, test := range []struct {

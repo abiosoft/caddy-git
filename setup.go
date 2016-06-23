@@ -46,7 +46,7 @@ func setup(c *caddy.Controller) error {
 
 		// If a HookUrl is set, we switch to event based pulling.
 		// Install the url handler
-		if repo.Hook.Url != "" {
+		if repo.Hook.URL != "" {
 
 			hookRepos = append(hookRepos, repo)
 
@@ -147,7 +147,7 @@ func parse(c *caddy.Controller) (Git, error) {
 				if !c.NextArg() {
 					return nil, c.ArgErr()
 				}
-				repo.Hook.Url = c.Val()
+				repo.Hook.URL = c.Val()
 
 				// optional secret for validation
 				if c.NextArg() {

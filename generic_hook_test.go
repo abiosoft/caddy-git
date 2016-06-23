@@ -8,7 +8,7 @@ import (
 )
 
 func TestGenericDeployPush(t *testing.T) {
-	repo := &Repo{Branch: "master", Hook: HookConfig{Url: "/generic_deploy"}}
+	repo := &Repo{Branch: "master", Hook: HookConfig{URL: "/generic_deploy"}}
 	gHook := GenericHook{}
 
 	for i, test := range []struct {

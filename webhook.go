@@ -16,7 +16,7 @@ type WebHook struct {
 
 // HookConfig is a webhook handler configuration.
 type HookConfig struct {
-	Url    string // url to listen on for webhooks
+	URL    string // url to listen on for webhooks
 	Secret string // secret to validate hooks
 	Type   string // type of Webhook
 }
@@ -83,7 +83,7 @@ func (h WebHook) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) 
 
 	for _, repo := range h.Repos {
 
-		if r.URL.Path == repo.Hook.Url {
+		if r.URL.Path == repo.Hook.URL {
 
 			// if handler type is specified.
 			if handler, ok := handlers[repo.Hook.Type]; ok {

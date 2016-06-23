@@ -143,7 +143,7 @@ func TestGitParse(t *testing.T) {
 			KeyPath: "~/.key",
 			URL:     "ssh://git@bitbucket.org:2222/user/repo.git",
 			Hook: HookConfig{
-				Url:  "/webhook",
+				URL:  "/webhook",
 				Type: "gogs",
 			},
 		}},
@@ -155,7 +155,7 @@ func TestGitParse(t *testing.T) {
 			KeyPath: "~/.key",
 			URL:     "ssh://git@bitbucket.org:2222/user/repo.git",
 			Hook: HookConfig{
-				Url:    "/webhook",
+				URL:    "/webhook",
 				Secret: "some-secrets",
 				Type:   "gogs",
 			},

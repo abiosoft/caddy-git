@@ -123,6 +123,9 @@ type OS interface {
 	// returns the resulting File.
 	TempFile(string, string) (File, error)
 
+	// TempDir returns the default directory to use for temporary files.
+	TempDir() string
+
 	// Sleep pauses the current goroutine for at least the duration d. A
 	// negative or zero duration causes Sleep to return immediately.
 	Sleep(time.Duration)
@@ -184,6 +187,11 @@ func (g GitOS) TempFile(dir, prefix string) (File, error) {
 	return ioutil.TempFile(dir, prefix)
 }
 
+// TempDir calls os.TempDir
+func (g GitOS) TempDir() string {
+	return os.TempDir()
+}
+
 // ReadDir calls ioutil.ReadDir.
 func (g GitOS) ReadDir(dirname string) ([]os.FileInfo, error) {
 	return ioutil.ReadDir(dirname)
@@ -199,7 +207,7 @@ func (g GitOS) Sleep(d time.Duration) {
 	time.Sleep(d)
 }
 
-// New Ticker calls time.NewTicker.
+// NewTicker calls time.NewTicker.
 func (g GitOS) NewTicker(d time.Duration) Ticker {
 	return &GitTicker{time.NewTicker(d)}
 }

@@ -46,7 +46,7 @@ func Init() error {
 	if _, err = gos.LookPath("bash"); err != nil {
 		shell = "sh"
 		if _, err = gos.LookPath("sh"); err != nil {
-			return fmt.Errorf("git middleware requires either bash or sh.")
+			return fmt.Errorf("git middleware requires either bash or sh")
 		}
 	}
 	return nil
@@ -66,14 +66,6 @@ func writeScriptFile(content []byte) (file gitos.File, err error) {
 		return nil, err
 	}
 	return file, file.Close()
-}
-
-// replace tokens in a string
-func replaceString(s string, replacements map[string]string) string {
-	for k, v := range replacements {
-		s = strings.Replace(s, k, v, -1)
-	}
-	return s;
 }
 
 // gitWrapperScript forms content for git.sh script
@@ -109,17 +101,16 @@ fi
 {git_binary} "$@"
 
 `
-	replacements := map[string]string {
-		"{shell}": shell,
-		"{tmp_dir}": os.TempDir(),
-		"{git_binary}": gitBinary,
-	}
-
-	return []byte(replaceString(scriptTemplate, replacements))
+	replacer := strings.NewReplacer(
+		"{shell}", shell,
+		"{tmp_dir}", strings.TrimSuffix(gos.TempDir(), "/"),
+		"{git_binary}", gitBinary,
+	)
+	return []byte(replacer.Replace(scriptTemplate))
 }
 
 // bashScript forms content of bash script to clone or update a repo using ssh
-func bashScript(gitSshPath string, repo *Repo, params []string) []byte {
+func bashScript(gitSSHPath string, repo *Repo, params []string) []byte {
 	scriptTemplate := `#!/bin/{shell}
 
 mkdir -p ~/.ssh;
@@ -128,12 +119,12 @@ ssh-keyscan -t rsa,dsa {repo_host} 2>&1 | sort -u - ~/.ssh/known_hosts > ~/.ssh/
 cat ~/.ssh/tmp_hosts >> ~/.ssh/known_hosts;
 {git_ssh_path} -i {ssh_key_path} {ssh_params};
 `
-	replacements := map[string]string {
-		"{shell}": shell,
-		"{repo_host}": repo.Host,
-		"{git_ssh_path}": gitSshPath,
-		"{ssh_key_path}": repo.KeyPath,
-		"{ssh_params}": strings.Join(params, " "),
-	}
-	return []byte(replaceString(scriptTemplate, replacements))
+	replacer := strings.NewReplacer(
+		"{shell}", shell,
+		"{repo_host}", repo.Host,
+		"{git_ssh_path}", gitSSHPath,
+		"{ssh_key_path}", repo.KeyPath,
+		"{ssh_params}", strings.Join(params, " "),
+	)
+	return []byte(replacer.Replace(scriptTemplate))
 }

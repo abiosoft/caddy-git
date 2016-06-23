@@ -186,6 +186,10 @@ func (f fakeOS) TempFile(dir, prefix string) (gitos.File, error) {
 	return &fakeFile{name: TempFileName, info: fakeInfo{name: TempFileName}}, nil
 }
 
+func (f fakeOS) TempDir() string {
+	return "/tmp"
+}
+
 func (f fakeOS) ReadDir(dirname string) ([]os.FileInfo, error) {
 	if f, ok := dirs[dirname]; ok {
 		return f, nil

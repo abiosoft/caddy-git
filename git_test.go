@@ -5,7 +5,6 @@ import (
 	"log"
 	"testing"
 	"time"
-	"os"
 
 	"github.com/abiosoft/caddy-git/gittest"
 )
@@ -27,6 +26,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestHelpers(t *testing.T) {
+	Init()
 	f, err := writeScriptFile([]byte("script"))
 	check(t, err)
 	var b [6]byte
@@ -49,13 +49,6 @@ func TestHelpers(t *testing.T) {
 	if string(wScript) != expectedWrapperScript {
 		t.Errorf("Expected %v found %v", expectedWrapperScript, string(wScript))
 	}
-
-	os.Setenv("TMPDIR", "/home/user/tmp")
-	wScriptAltTmp := gitWrapperScript()
-	if string(wScriptAltTmp) != expectedWrapperScriptAltTmp {
-		t.Errorf("Expected %v found %v", expectedWrapperScriptAltTmp, string(wScriptAltTmp))
-	}
-
 
 	f, err = writeScriptFile(wScript)
 	check(t, err)
