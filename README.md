@@ -6,11 +6,11 @@ Middleware for [Caddy](https://caddyserver.com).
 
 git clones a git repository into the site. This makes it possible to deploy your site with a simple git push.
 
-The git directive does not chain in a handler. Instead, it starts a service routine that runs during the lifetime of the server. When the server starts, it clones the repository. While the server is still up, it pulls the latest every so often. In regular git fashion, a download only includes changes so it is very efficient.
+The git directive starts a service routine that runs during the lifetime of the server. When the service starts, it clones the repository. While the server is still up, it pulls the latest every so often. You can also set up a webhook to pull immediately after a push. In regular git fashion, a pull only includes changes, so it is very efficient.
 
 If a pull fails, the service will retry up to three times. If the pull was not successful by then, it won't try again until the next interval.
 
-**Requirements**: This directive requires git to be installed. Also, private repositories may only be accessed from Linux or Mac systems. (Contributions are welcome that make private repositories work on Windows.)
+**Requirements:** This directive requires git to be installed. Also, private repositories may only be accessed from Linux or Mac systems. (Contributions are welcome that make private repositories work on Windows.)
 
 ### Syntax
 
