@@ -64,4 +64,10 @@ func TestServices(t *testing.T) {
 	if len(Services.services) != 0 {
 		t.Errorf("Expected %v service(s), found %v", 0, len(Services.services))
 	}
+
+	repo.Interval = 0
+	Start(repo)
+	if len(Services.services) != 0 {
+		t.Errorf("Expected %v service(s), found %v", 0, len(Services.services))
+	}
 }

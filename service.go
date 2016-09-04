@@ -22,6 +22,11 @@ type repoService struct {
 
 // Start starts a new background service to pull periodically.
 func Start(repo *Repo) {
+	if repo.Interval <= 0 {
+		// ignore, don't setup periodic pull.
+		Logger().Println("interval too small, periodic pull not enabled.")
+		return
+	}
 	service := &repoService{
 		repo,
 		gos.NewTicker(repo.Interval),
