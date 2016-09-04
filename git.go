@@ -39,14 +39,14 @@ type Repo struct {
 	Branch     string        // Git branch
 	KeyPath    string        // Path to private ssh key
 	Interval   time.Duration // Interval between pulls
+	Args       []string      // Additonal cli args to pass to git clone
 	Then       []Then        // Commands to execute after successful git pull
 	pulled     bool          // true if there was a successful pull
 	lastPull   time.Time     // time of the last successful pull
 	lastCommit string        // hash for the most recent commit
+	latestTag  string        // latest tag name
+	Hook       HookConfig    // Webhook configuration
 	sync.Mutex
-	latestTag string     // latest tag name
-	Hook      HookConfig // Webhook configuration
-
 }
 
 // Pull attempts a git pull.
@@ -111,11 +111,11 @@ func (r *Repo) pull() error {
 
 // clone performs git clone.
 func (r *Repo) clone() error {
-	params := []string{"clone", "-b", r.Branch, r.URL, r.Path}
+	params := append([]string{"clone", "-b", r.Branch}, append(r.Args, r.URL, r.Path)...)
 
 	tagMode := r.Branch == latestTag
 	if tagMode {
-		params = []string{"clone", r.URL, r.Path}
+		params = append([]string{"clone"}, append(r.Args, r.URL, r.Path)...)
 	}
 
 	var err error

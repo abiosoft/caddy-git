@@ -143,6 +143,8 @@ func parse(c *caddy.Controller) (Git, error) {
 				if t > 0 {
 					repo.Interval = time.Duration(t) * time.Second
 				}
+			case "args":
+				repo.Args = c.RemainingArgs()
 			case "hook":
 				if !c.NextArg() {
 					return nil, c.ArgErr()
