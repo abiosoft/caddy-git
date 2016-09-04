@@ -36,6 +36,7 @@ git [repo path] {
 	hook_type   type
 	then        command [args...]
 	then_long   command [args...]
+	use_absolute_path
 }
 ```
 * **repo** is the URL to the repository; SSH and HTTPS URLs are supported.
@@ -47,6 +48,7 @@ git [repo path] {
 * **path** and **secret** are used to create a webhook which pulls the latest right after a push. This is limited to the [supported webhooks](#supported-webhooks). **secret** is currently supported for GitHub and Travis hooks only.
 * **type** is webhook type to use. The webhook type is auto detected by default but it can be explicitly set to one of the [supported webhooks](#supported-webhooks). This is a requirement for generic webhook.
 * **command** is a command to execute after successful pull; followed by **args** which are any arguments to pass to the command. You can have multiple lines of this for multiple commands. **then_long** is for long executing commands that should run in background.
+* **use\_absolute\_path** configures clone **path** to be handled as an absolute path; instead of relative.
 
 Each property in the block is optional. The path and repo may be specified on the first line, as in the first syntax, or they may be specified in the block with other values.
 
