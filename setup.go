@@ -96,12 +96,17 @@ func parse(c *caddy.Controller) (Git, error) {
 		repo := &Repo{Branch: "master", Interval: DefaultInterval, Path: config.Root}
 
 		args := c.RemainingArgs()
-		absolutePath := false
-		clonePath := ""
+
+		clonePath := func(s string) string {
+			if filepath.IsAbs(s) {
+				return filepath.Clean(s)
+			}
+			return filepath.Join(config.Root, s)
+		}
 
 		switch len(args) {
 		case 2:
-			clonePath = args[1]
+			repo.Path = clonePath(args[1])
 			fallthrough
 		case 1:
 			u, err := validateURL(args[0])
@@ -126,12 +131,7 @@ func parse(c *caddy.Controller) (Git, error) {
 				if !c.NextArg() {
 					return nil, c.ArgErr()
 				}
-				clonePath = c.Val()
-			case "use_absolute_path":
-				if c.NextArg() {
-					return nil, c.ArgErr()
-				}
-				absolutePath = true
+				repo.Path = clonePath(c.Val())
 			case "branch":
 				if !c.NextArg() {
 					return nil, c.ArgErr()
@@ -187,15 +187,6 @@ func parse(c *caddy.Controller) (Git, error) {
 				repo.Then = append(repo.Then, NewLongThen(command, args...))
 			default:
 				return nil, c.ArgErr()
-			}
-		}
-
-		// set path if configured
-		if clonePath != "" {
-			if absolutePath {
-				repo.Path = clonePath
-			} else {
-				repo.Path = filepath.Join(config.Root, clonePath)
 			}
 		}
 

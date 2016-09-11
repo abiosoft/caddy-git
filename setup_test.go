@@ -48,12 +48,6 @@ func TestGitParse(t *testing.T) {
 		}},
 		{`git github.com/user/repo /somepath`, false, &Repo{
 			URL:  "https://github.com/user/repo.git",
-			Path: "somepath",
-		}},
-		{`git github.com/user/repo /somepath {
-			use_absolute_path
-		}`, false, &Repo{
-			URL:  "https://github.com/user/repo.git",
 			Path: "/somepath",
 		}},
 		{`git git@github.com/user/repo`, false, &Repo{
