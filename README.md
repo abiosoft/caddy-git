@@ -67,7 +67,7 @@ git github.com/user/myproject
 
 Public repository pulled into the "subfolder" directory in the site root:
 ```
-git github.com/user/myproject /subfolder
+git github.com/user/myproject subfolder
 ```
 
 Private repository pulled into the "subfolder" directory with tag v1.0 once per day:
