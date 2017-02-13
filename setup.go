@@ -11,7 +11,8 @@ import (
 	"time"
 
 	"github.com/mholt/caddy"
-	"github.com/mholt/caddy/caddyhttp/httpserver"
+	"github.com/miekg/coredns/core/dnsserver"
+	"github.com/miekg/coredns/middleware"
 )
 
 const (
@@ -22,7 +23,7 @@ const (
 
 func init() {
 	caddy.RegisterPlugin("git", caddy.Plugin{
-		ServerType: "http",
+		ServerType: "dns",
 		Action:     setup,
 	})
 }
@@ -79,7 +80,7 @@ func setup(c *caddy.Controller) error {
 	// return handler
 	if len(hookRepos) > 0 {
 		webhook := &WebHook{Repos: hookRepos}
-		httpserver.GetConfig(c).AddMiddleware(func(next httpserver.Handler) httpserver.Handler {
+		dnsserver.GetConfig(c).AddMiddleware(func(next middleware.Handler) middleware.Handler {
 			webhook.Next = next
 			return webhook
 		})
@@ -91,7 +92,7 @@ func setup(c *caddy.Controller) error {
 func parse(c *caddy.Controller) (Git, error) {
 	var git Git
 
-	config := httpserver.GetConfig(c)
+	config := dnsserver.GetConfig(c)
 	for c.Next() {
 		repo := &Repo{Branch: "master", Interval: DefaultInterval, Path: config.Root}
 

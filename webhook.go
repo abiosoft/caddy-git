@@ -1,17 +1,19 @@
 package git
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
-	"github.com/mholt/caddy/caddyhttp/httpserver"
+	"github.com/miekg/dns"
+	"golang.org/x/net/context"
+
+	"github.com/miekg/coredns/middleware"
 )
 
 // WebHook is middleware for handling web hooks of git providers
 type WebHook struct {
 	Repos []*Repo
-	Next  httpserver.Handler
+	Next  middleware.Handler
 }
 
 // HookConfig is a webhook handler configuration.
@@ -78,47 +80,10 @@ var defaultHandlers = []string{
 	"gogs",
 }
 
-// ServeHTTP implements the middlware.Handler interface.
-func (h WebHook) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
-
-	for _, repo := range h.Repos {
-
-		if r.URL.Path == repo.Hook.URL {
-
-			// if handler type is specified.
-			if handler, ok := handlers[repo.Hook.Type]; ok {
-				if !handler.DoesHandle(r.Header) {
-					return http.StatusBadRequest, errors.New(http.StatusText(http.StatusBadRequest))
-				}
-				status, err := handler.Handle(w, r, repo)
-				// if the webhook is ignored, log it and allow request to continue.
-				if hookIgnored(err) {
-					Logger().Println(err)
-					err = nil
-				}
-				return status, err
-			}
-
-			// auto detect handler
-			for _, h := range defaultHandlers {
-				// if a handler indicates it does handle the request,
-				// we do not try other handlers. Only one handler ever
-				// handles a specific request.
-				if handlers[h].DoesHandle(r.Header) {
-					status, err := handlers[h].Handle(w, r, repo)
-					// if the webhook is ignored, log it and allow request to continue.
-					if hookIgnored(err) {
-						Logger().Println(err)
-						err = nil
-					}
-					return status, err
-				}
-			}
-
-			// no compatible handler
-			Logger().Println("No compatible handler found. Consider enabling generic handler with 'hook_type generic'.")
-		}
-	}
-
-	return h.Next.ServeHTTP(w, r)
+// ServeDNS implements the middlware.Handler interface.
+func (h WebHook) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+	// We don't support web hooks. What am I? A webserver?
+	return h.Next.ServeDNS(ctx, w, r)
 }
+
+func (h WebHook) Name() string { return "git" }
