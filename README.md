@@ -27,7 +27,7 @@ For more control or to use a private repository, use the following syntax:
 ```
 git [repo path] {
 	repo        repo
-    path        path
+	path        path
 	branch      branch
 	key         key
 	interval    interval
