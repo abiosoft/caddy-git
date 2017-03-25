@@ -36,12 +36,12 @@ type gitCmd struct {
 	sync.RWMutex
 }
 
-// Command returns the full command as configured in Caddyfile
+// Command returns the full command as configured in Caddyfile.
 func (g *gitCmd) Command() string {
 	return g.command + " " + strings.Join(g.args, " ")
 }
 
-// Exec executes the command initiated in GitCmd
+// Exec executes the command initiated in gitCmd.
 func (g *gitCmd) Exec(dir string) error {
 	g.Lock()
 	g.dir = dir

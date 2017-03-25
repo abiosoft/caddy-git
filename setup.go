@@ -150,8 +150,10 @@ func parse(c *caddy.Controller) (Git, error) {
 				if t > 0 {
 					repo.Interval = time.Duration(t) * time.Second
 				}
-			case "args":
-				repo.Args = c.RemainingArgs()
+			case "args", "clone_args":
+				repo.CloneArgs = c.RemainingArgs()
+			case "pull_args":
+				repo.PullArgs = c.RemainingArgs()
 			case "hook":
 				if !c.NextArg() {
 					return nil, c.ArgErr()
@@ -234,7 +236,7 @@ func parse(c *caddy.Controller) (Git, error) {
 // validateURL validates repoUrl is a valid git url and appends
 // with .git if missing.
 func validateURL(repoURL string) (string, error) {
-	u, err := url.Parse(repoURL)
+	u, err := parseURL(repoURL)
 	if err != nil {
 		return "", err
 	}
@@ -259,7 +261,7 @@ func validateURL(repoURL string) (string, error) {
 // Returns sanitized url, hostName (e.g. github.com, bitbucket.com)
 // and possible error
 func sanitizeHTTP(repoURL string) (string, string, error) {
-	u, err := url.Parse(repoURL)
+	u, err := parseURL(repoURL)
 	if err != nil {
 		return "", "", err
 	}
@@ -293,7 +295,7 @@ func sanitizeHTTP(repoURL string) (string, string, error) {
 // Returns sanitized url, hostName (e.g. github.com, bitbucket.com)
 // and possible error
 func sanitizeSSH(repoURL string) (string, string, error) {
-	u, err := url.Parse(repoURL)
+	u, err := parseURL(repoURL)
 	if err != nil {
 		return "", "", err
 	}
@@ -329,4 +331,26 @@ func sanitizeSSH(repoURL string) (string, string, error) {
 	}
 	repoURL = replacer.Replace(u.String())
 	return repoURL, host, nil
+}
+
+func parseURL(repoURL string) (*url.URL, error) {
+	var replacers struct {
+		before, after *strings.Replacer
+	}
+	replacers.before = strings.NewReplacer(":", "..")
+	replacers.after = strings.NewReplacer("..", ":")
+
+	// hack to hide colons in ssh URL
+	if str := strings.Split(repoURL, "://"); len(str) > 1 {
+		repoURL = str[0] + "://" + replacers.before.Replace(str[1])
+	} else {
+		repoURL = replacers.before.Replace(repoURL)
+	}
+
+	u, err := url.Parse(repoURL)
+	if err != nil {
+		return nil, err
+	}
+	u.Host = replacers.after.Replace(u.Host)
+	return u, nil
 }

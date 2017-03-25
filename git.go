@@ -39,7 +39,8 @@ type Repo struct {
 	Branch     string        // Git branch
 	KeyPath    string        // Path to private ssh key
 	Interval   time.Duration // Interval between pulls
-	Args       []string      // Additonal cli args to pass to git clone
+	CloneArgs  []string      // Additonal cli args to pass to git clone
+	PullArgs   []string      // Additonal cli args to pass to git pull
 	Then       []Then        // Commands to execute after successful git pull
 	pulled     bool          // true if there was a successful pull
 	lastPull   time.Time     // time of the last successful pull
@@ -98,7 +99,7 @@ func (r *Repo) pull() error {
 		return r.checkoutLatestTag()
 	}
 
-	params := []string{"pull", "origin", r.Branch}
+	params := append([]string{"pull"}, append(r.PullArgs, "origin", r.Branch)...)
 	var err error
 	if err = r.gitCmd(params, r.Path); err == nil {
 		r.pulled = true
@@ -111,11 +112,11 @@ func (r *Repo) pull() error {
 
 // clone performs git clone.
 func (r *Repo) clone() error {
-	params := append([]string{"clone", "-b", r.Branch}, append(r.Args, r.URL, r.Path)...)
+	params := append([]string{"clone", "-b", r.Branch}, append(r.CloneArgs, r.URL, r.Path)...)
 
 	tagMode := r.Branch == latestTag
 	if tagMode {
-		params = append([]string{"clone"}, append(r.Args, r.URL, r.Path)...)
+		params = append([]string{"clone"}, append(r.CloneArgs, r.URL, r.Path)...)
 	}
 
 	var err error
@@ -258,7 +259,7 @@ func (r *Repo) mostRecentCommit() (string, error) {
 	return runCmdOutput(c, args, r.Path)
 }
 
-// getLatestTag retrieves the most recent tag in the repository.
+// fetchLatestTag retrieves the most recent tag in the repository.
 func (r *Repo) fetchLatestTag() (string, error) {
 	// fetch updates to get latest tag
 	params := []string{"fetch", "origin", "--tags"}
@@ -275,7 +276,7 @@ func (r *Repo) fetchLatestTag() (string, error) {
 	return runCmdOutput(c, args, r.Path)
 }
 
-// getRepoURL retrieves remote origin url for the git repository at path
+// originURL retrieves remote origin url for the git repository at path
 func (r *Repo) originURL() (string, error) {
 	_, err := gos.Stat(r.Path)
 	if err != nil {

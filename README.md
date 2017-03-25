@@ -31,7 +31,8 @@ git [repo path] {
 	branch      branch
 	key         key
 	interval    interval
-	args        args
+	clone_args  args
+	pull_args   args
 	hook        path secret
 	hook_type   type
 	then        command [args...]
@@ -43,7 +44,8 @@ git [repo path] {
 * **branch** is the branch or tag to pull; default is master branch. **`{latest}`** is a placeholder for latest tag which ensures the most recent tag is always pulled.
 * **key** is the path to the SSH private key; only required for private repositories.
 * **interval** is the number of seconds between pulls; default is 3600 (1 hour), minimum 5. An interval of -1 disables periodic pull.
-* **args** is the additional cli args to pass to `git clone` e.g. `--depth=1`. 
+* **clone_args** is the additional cli args to pass to `git clone` e.g. `--depth=1`. `git clone` is called when the source is being fetched the first time.
+* **pull_args** is the additional cli args to pass to `git pull` e.g. `-s recursive -X theirs`. `git pull` is used when the source is being updated.
 * **path** and **secret** are used to create a webhook which pulls the latest right after a push. This is limited to the [supported webhooks](#supported-webhooks). **secret** is currently supported for GitHub and Travis hooks only.
 * **type** is webhook type to use. The webhook type is auto detected by default but it can be explicitly set to one of the [supported webhooks](#supported-webhooks). This is a requirement for generic webhook.
 * **command** is a command to execute after successful pull; followed by **args** which are any arguments to pass to the command. You can have multiple lines of this for multiple commands. **then_long** is for long executing commands that should run in background.
@@ -113,6 +115,4 @@ Generic webhook payload: `<branch>` is branch name e.g. `master`.
 	"ref" : "refs/heads/<branch>"
 }
 ```
-### Build from source
-Check instructions for building from source here [BUILDING.md](https://github.com/abiosoft/caddy-git/blob/master/BUILDING.md)
 

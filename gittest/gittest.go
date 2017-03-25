@@ -55,19 +55,19 @@ type fakeFile struct {
 	sync.Mutex
 }
 
-func (f fakeFile) Name() string {
+func (f *fakeFile) Name() string {
 	return f.name
 }
 
-func (f fakeFile) Stat() (os.FileInfo, error) {
+func (f *fakeFile) Stat() (os.FileInfo, error) {
 	return fakeInfo{name: f.name}, nil
 }
 
-func (f fakeFile) Close() error {
+func (f *fakeFile) Close() error {
 	return nil
 }
 
-func (f fakeFile) Chmod(mode os.FileMode) error {
+func (f *fakeFile) Chmod(mode os.FileMode) error {
 	f.info.mode = mode
 	return nil
 }

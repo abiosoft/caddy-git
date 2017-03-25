@@ -34,14 +34,14 @@ func TestGitParse(t *testing.T) {
 		{`git git@github.com:user/repo {
 			args --depth 1
 		}`, false, &Repo{
-			URL:  "https://git@github.com/user/repo.git",
-			Args: []string{"--depth", "1"},
+			URL:       "https://git@github.com/user/repo.git",
+			CloneArgs: []string{"--depth", "1"},
 		}},
 		{`git git@github.com:user/repo {
 			args --depth=1
 		}`, false, &Repo{
-			URL:  "https://git@github.com/user/repo.git",
-			Args: []string{"--depth=1"},
+			URL:       "https://git@github.com/user/repo.git",
+			CloneArgs: []string{"--depth=1"},
 		}},
 		{`git github.com/user/repo`, false, &Repo{
 			URL: "https://github.com/user/repo.git",
@@ -297,7 +297,7 @@ func reposEqual(expected, repo *Repo) bool {
 	if fmt.Sprint(expected.Hook) != fmt.Sprint(repo.Hook) {
 		return false
 	}
-	if fmt.Sprint(expected.Args) != fmt.Sprint(repo.Args) {
+	if fmt.Sprint(expected.CloneArgs) != fmt.Sprint(repo.CloneArgs) {
 		return false
 	}
 	return true
