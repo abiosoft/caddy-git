@@ -1,3 +1,5 @@
+package git
+
 import (
 	"fmt"
 	"io/ioutil"
