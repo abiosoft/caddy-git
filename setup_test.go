@@ -1,5 +1,3 @@
-package git
-
 import (
 	"fmt"
 	"io/ioutil"
@@ -199,10 +197,7 @@ func TestGitParse(t *testing.T) {
 func TestIntervals(t *testing.T) {
 	tests := []string{
 		`git git@github.com:user/repo { interval 10 }`,
-		`git git@github.com:user/repo { interval 5 }`,
-		`git git@github.com:user/repo { interval 2 }`,
 		`git git@github.com:user/repo { interval 1 }`,
-		`git git@github.com:user/repo { interval 6 }`,
 	}
 
 	for i, test := range tests {
