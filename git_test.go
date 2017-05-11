@@ -220,7 +220,7 @@ cat ~/.ssh/tmp_hosts >> ~/.ssh/known_hosts;
 ` + gittest.TempFileName + ` -i ~/.key clone git@github.com/repo/user;
 `
 
-var expectedWrapperScript = `#!/bin/bash
+var expectedWrapperScript = `#!/usr/bin/env bash
 
 # The MIT License (MIT)
 # Copyright (c) 2013 Alvin Abad
@@ -252,7 +252,7 @@ fi
 
 `
 
-var expectedWrapperScriptAltTmp = `#!/bin/bash
+var expectedWrapperScriptAltTmp = `#!/usr/bin/env bash
 
 # The MIT License (MIT)
 # Copyright (c) 2013 Alvin Abad
@@ -270,7 +270,7 @@ trap 'rm -f /home/user/tmp/.git_ssh.$$' 0
 
 if [ "$1" = "-i" ]; then
     SSH_KEY=$2; shift; shift
-    echo -e "#!/bin/bash \n \
+    echo -e "#!/usr/bin/env bash \n \
     ssh -i $SSH_KEY \$@" > /home/user/tmp/.git_ssh.$$
     chmod +x /home/user/tmp/.git_ssh.$$
     export GIT_SSH=/home/user/tmp/.git_ssh.$$
