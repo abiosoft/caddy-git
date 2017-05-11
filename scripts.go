@@ -70,7 +70,7 @@ func writeScriptFile(content []byte) (file gitos.File, err error) {
 
 // gitWrapperScript forms content for git.sh script
 func gitWrapperScript() []byte {
-	scriptTemplate := `#!/bin/{shell}
+	scriptTemplate := `#!/usr/bin/env {shell}
 
 # The MIT License (MIT)
 # Copyright (c) 2013 Alvin Abad
@@ -88,7 +88,7 @@ trap 'rm -f {tmp_dir}/.git_ssh.$$' 0
 
 if [ "$1" = "-i" ]; then
     SSH_KEY=$2; shift; shift
-    echo -e "#!/bin/{shell} \n \
+    echo -e "#!/usr/bin/env {shell} \n \
     ssh -i $SSH_KEY \$@" > {tmp_dir}/.git_ssh.$$
     chmod +x {tmp_dir}/.git_ssh.$$
     export GIT_SSH={tmp_dir}/.git_ssh.$$
@@ -111,7 +111,7 @@ fi
 
 // bashScript forms content of bash script to clone or update a repo using ssh
 func bashScript(gitSSHPath string, repo *Repo, params []string) []byte {
-	scriptTemplate := `#!/bin/{shell}
+	scriptTemplate := `#!/usr/bin/env {shell}
 
 mkdir -p ~/.ssh;
 touch ~/.ssh/known_hosts;
