@@ -9,12 +9,14 @@ import (
 	"strings"
 )
 
+// GitlabHook is webhook for gitlab.com
 type GitlabHook struct{}
 
 type glPush struct {
 	Ref string `json:"ref"`
 }
 
+// DoesHandle satisfies hookHandler.
 func (g GitlabHook) DoesHandle(h http.Header) bool {
 	event := h.Get("X-Gitlab-Event")
 
@@ -25,9 +27,10 @@ func (g GitlabHook) DoesHandle(h http.Header) bool {
 	return false
 }
 
+// Handle satisfies hookHandler.
 func (g GitlabHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (int, error) {
 	if r.Method != "POST" {
-		return http.StatusMethodNotAllowed, errors.New("the request had an invalid method.")
+		return http.StatusMethodNotAllowed, errors.New("the request had an invalid method")
 	}
 
 	body, err := ioutil.ReadAll(r.Body)
@@ -37,7 +40,7 @@ func (g GitlabHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (
 
 	event := r.Header.Get("X-Gitlab-Event")
 	if event == "" {
-		return http.StatusBadRequest, errors.New("the 'X-Gitlab-Event' header is required but was missing.")
+		return http.StatusBadRequest, errors.New("the 'X-Gitlab-Event' header is required but was missing")
 	}
 
 	switch event {
@@ -67,7 +70,7 @@ func (g GitlabHook) handlePush(body []byte, repo *Repo) error {
 	// and if it matches with our locally tracked one, pull.
 	refSlice := strings.Split(push.Ref, "/")
 	if len(refSlice) != 3 {
-		return errors.New("the push request contained an invalid reference string.")
+		return errors.New("the push request contained an invalid reference string")
 	}
 
 	branch := refSlice[2]

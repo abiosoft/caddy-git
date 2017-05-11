@@ -17,6 +17,7 @@ var bitbucketIPBlocks = []string{
 	"104.192.143.0/24",
 }
 
+// BitbucketHook is webhook for BitBucket.org.
 type BitbucketHook struct{}
 
 type bbPush struct {
@@ -29,6 +30,7 @@ type bbPush struct {
 	} `json:"push,omitempty"`
 }
 
+// DoesHandle satisfies hookHandler.
 func (b BitbucketHook) DoesHandle(h http.Header) bool {
 	event := h.Get("X-Event-Key")
 
@@ -39,13 +41,14 @@ func (b BitbucketHook) DoesHandle(h http.Header) bool {
 	return false
 }
 
+// Handle satisfies hookHandler.
 func (b BitbucketHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (int, error) {
 	if !b.verifyBitbucketIP(r.RemoteAddr) {
 		return http.StatusForbidden, errors.New("the request doesn't come from a valid IP")
 	}
 
 	if r.Method != "POST" {
-		return http.StatusMethodNotAllowed, errors.New("the request had an invalid method.")
+		return http.StatusMethodNotAllowed, errors.New("the request had an invalid method")
 	}
 
 	body, err := ioutil.ReadAll(r.Body)
@@ -55,7 +58,7 @@ func (b BitbucketHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo
 
 	event := r.Header.Get("X-Event-Key")
 	if event == "" {
-		return http.StatusBadRequest, errors.New("the 'X-Event-Key' header is required but was missing.")
+		return http.StatusBadRequest, errors.New("the 'X-Event-Key' header is required but was missing")
 	}
 
 	switch event {

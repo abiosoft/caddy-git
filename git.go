@@ -144,7 +144,7 @@ func (r *Repo) checkoutLatestTag() error {
 	}
 	if tag == "" {
 		Logger().Println("No tags found for Repo: ", r.URL)
-		return fmt.Errorf("No tags found for Repo: %v.", r.URL)
+		return fmt.Errorf("No tags found for Repo: %v", r.URL)
 	} else if tag == r.latestTag {
 		Logger().Println("No new tags.")
 		return nil

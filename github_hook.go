@@ -12,6 +12,7 @@ import (
 	"strings"
 )
 
+// GithubHook is webhook for Github.com.
 type GithubHook struct{}
 
 type ghRelease struct {
@@ -26,6 +27,7 @@ type ghPush struct {
 	Ref string `json:"ref"`
 }
 
+// DoesHandle satisfies hookHandler.
 func (g GithubHook) DoesHandle(h http.Header) bool {
 	userAgent := h.Get("User-Agent")
 
@@ -36,9 +38,10 @@ func (g GithubHook) DoesHandle(h http.Header) bool {
 	return false
 }
 
+// Handle satisfies hookHandler.
 func (g GithubHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (int, error) {
 	if r.Method != "POST" {
-		return http.StatusMethodNotAllowed, errors.New("the request had an invalid method.")
+		return http.StatusMethodNotAllowed, errors.New("the request had an invalid method")
 	}
 
 	// read full body - required for signature
@@ -51,7 +54,7 @@ func (g GithubHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (
 
 	event := r.Header.Get("X-Github-Event")
 	if event == "" {
-		return http.StatusBadRequest, errors.New("the 'X-Github-Event' header is required but was missing.")
+		return http.StatusBadRequest, errors.New("the 'X-Github-Event' header is required but was missing")
 	}
 
 	switch event {
@@ -90,7 +93,7 @@ func (g GithubHook) handleSignature(r *http.Request, body []byte, secret string)
 			expectedMac := hex.EncodeToString(mac.Sum(nil))
 
 			if signature[5:] != expectedMac {
-				return errors.New("could not verify request signature. The signature is invalid!")
+				return errors.New("could not verify request signature. The signature is invalid")
 			}
 		}
 	}
@@ -110,7 +113,7 @@ func (g GithubHook) handlePush(body []byte, repo *Repo) error {
 	// and if it matches with our locally tracked one, pull.
 	refSlice := strings.Split(push.Ref, "/")
 	if len(refSlice) != 3 {
-		return errors.New("the push request contained an invalid reference string.")
+		return errors.New("the push request contained an invalid reference string")
 	}
 
 	branch := refSlice[2]
@@ -133,7 +136,7 @@ func (g GithubHook) handleRelease(body []byte, repo *Repo) error {
 	}
 
 	if release.Release.TagName == "" {
-		return errors.New("the release request contained an invalid TagName.")
+		return errors.New("the release request contained an invalid TagName")
 	}
 
 	Logger().Printf("Received new release '%s'. -> Updating local repository to this release.\n", release.Release.Name)

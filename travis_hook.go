@@ -10,12 +10,15 @@ import (
 	"time"
 )
 
+// TravisHook is webhook for travis-ci.org
 type TravisHook struct{}
 
+// DoesHandle satisfies hookHandler.
 func (t TravisHook) DoesHandle(h http.Header) bool {
 	return h.Get("Travis-Repo-Slug") != ""
 }
 
+// Handle satisfies hookHandler.
 func (t TravisHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (int, error) {
 	if r.Method != "POST" {
 		return http.StatusMethodNotAllowed, errors.New("the request had an invalid method")
@@ -38,7 +41,7 @@ func (t TravisHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (
 	// ignored webhooks
 	err := hookIgnoredError{hookType: hookName(t)}
 	if data.Type != "push" || data.StatusMessage != "Passed" {
-		err.err = fmt.Errorf("Ignoring payload with wrong status or type.")
+		err.err = fmt.Errorf("Ignoring payload with wrong status or type")
 		return 200, err
 	}
 	if repo.Branch != "" && data.Branch != repo.Branch {

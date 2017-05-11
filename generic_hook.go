@@ -8,19 +8,22 @@ import (
 	"strings"
 )
 
+// GenericHook is generic webhook.
 type GenericHook struct{}
 
 type gPush struct {
 	Ref string `json:"ref"`
 }
 
+// DoesHandle satisfies hookHandler.
 func (g GenericHook) DoesHandle(h http.Header) bool {
 	return true
 }
 
+// Handle satisfies hookhandler.
 func (g GenericHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (int, error) {
 	if r.Method != "POST" {
-		return http.StatusMethodNotAllowed, errors.New("the request had an invalid method.")
+		return http.StatusMethodNotAllowed, errors.New("the request had an invalid method")
 	}
 
 	body, err := ioutil.ReadAll(r.Body)
@@ -48,7 +51,7 @@ func (g GenericHook) handlePush(body []byte, repo *Repo) error {
 	// and if it matches with our locally tracked one, pull.
 	refSlice := strings.Split(push.Ref, "/")
 	if len(refSlice) != 3 {
-		return errors.New("the push request contained an invalid reference string.")
+		return errors.New("the push request contained an invalid reference string")
 	}
 
 	branch := refSlice[2]
