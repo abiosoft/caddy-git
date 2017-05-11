@@ -211,7 +211,7 @@ func createRepo(r *Repo) *Repo {
 	return repo
 }
 
-var expectedBashScript = `#!/bin/bash
+var expectedBashScript = `#!/usr/bin/env bash
 
 mkdir -p ~/.ssh;
 touch ~/.ssh/known_hosts;
@@ -238,7 +238,7 @@ trap 'rm -f /tmp/.git_ssh.$$' 0
 
 if [ "$1" = "-i" ]; then
     SSH_KEY=$2; shift; shift
-    echo -e "#!/bin/bash \n \
+    echo -e "#!/usr/bin/env bash \n \
     ssh -i $SSH_KEY \$@" > /tmp/.git_ssh.$$
     chmod +x /tmp/.git_ssh.$$
     export GIT_SSH=/tmp/.git_ssh.$$
