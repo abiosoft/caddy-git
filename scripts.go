@@ -70,7 +70,7 @@ func writeScriptFile(content []byte) (file gitos.File, err error) {
 
 // gitWrapperScript forms content for git.sh script
 func gitWrapperScript() []byte {
-	scriptTemplate := `#!/bin/{shell}
+	scriptTemplate := `#!/usr/bin/env {shell}
 
 # The MIT License (MIT)
 # Copyright (c) 2013 Alvin Abad
