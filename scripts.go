@@ -88,7 +88,7 @@ trap 'rm -f {tmp_dir}/.git_ssh.$$' 0
 
 if [ "$1" = "-i" ]; then
     SSH_KEY=$2; shift; shift
-    echo -e "#!/usr/bin/env {shell} \n \
+    echo -e "#!/usr/bin/env {shell}\n \
     ssh -i $SSH_KEY \$@" > {tmp_dir}/.git_ssh.$$
     chmod +x {tmp_dir}/.git_ssh.$$
     export GIT_SSH={tmp_dir}/.git_ssh.$$

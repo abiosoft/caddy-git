@@ -238,7 +238,7 @@ trap 'rm -f /tmp/.git_ssh.$$' 0
 
 if [ "$1" = "-i" ]; then
     SSH_KEY=$2; shift; shift
-    echo -e "#!/usr/bin/env bash \n \
+    echo -e "#!/usr/bin/env bash\n \
     ssh -i $SSH_KEY \$@" > /tmp/.git_ssh.$$
     chmod +x /tmp/.git_ssh.$$
     export GIT_SSH=/tmp/.git_ssh.$$
@@ -270,7 +270,7 @@ trap 'rm -f /home/user/tmp/.git_ssh.$$' 0
 
 if [ "$1" = "-i" ]; then
     SSH_KEY=$2; shift; shift
-    echo -e "#!/usr/bin/env bash \n \
+    echo -e "#!/usr/bin/env bash\n \
     ssh -i $SSH_KEY \$@" > /home/user/tmp/.git_ssh.$$
     chmod +x /home/user/tmp/.git_ssh.$$
     export GIT_SSH=/home/user/tmp/.git_ssh.$$
