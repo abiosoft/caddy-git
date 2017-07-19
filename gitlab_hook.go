@@ -38,6 +38,11 @@ func (g GitlabHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (
 		return http.StatusRequestTimeout, errors.New("could not read body from request")
 	}
 
+	err = g.handleToken(r, body, repo.Hook.Secret)
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+
 	event := r.Header.Get("X-Gitlab-Event")
 	if event == "" {
 		return http.StatusBadRequest, errors.New("the 'X-Gitlab-Event' header is required but was missing")
@@ -56,6 +61,24 @@ func (g GitlabHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (
 	}
 
 	return http.StatusOK, err
+}
+
+// Check for an optional token in the request. GitLab's webhook tokens are just
+// simple strings that get sent as a header with the hook request. If one
+// exists, verify that it matches the secret in the Caddy configuration.
+func (g GitlabHook) handleToken(r *http.Request, body []byte, secret string) error {
+	token := r.Header.Get("X-Gitlab-Token")
+	if token != "" {
+		if secret == "" {
+			Logger().Print("Unable to verify request. Secret not set in caddyfile!\n")
+		} else {
+			if token != secret {
+				return errors.New("Unable to verify request. The token and specified secret do not match!")
+			}
+		}
+	}
+
+	return nil
 }
 
 func (g GitlabHook) handlePush(body []byte, repo *Repo) error {
