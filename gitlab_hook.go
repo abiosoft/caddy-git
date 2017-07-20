@@ -63,7 +63,7 @@ func (g GitlabHook) Handle(w http.ResponseWriter, r *http.Request, repo *Repo) (
 	return http.StatusOK, err
 }
 
-// Check for an optional token in the request. GitLab's webhook tokens are just
+// handleToken checks for an optional token in the request. GitLab's webhook tokens are just
 // simple strings that get sent as a header with the hook request. If one
 // exists, verify that it matches the secret in the Caddy configuration.
 func (g GitlabHook) handleToken(r *http.Request, body []byte, secret string) error {
