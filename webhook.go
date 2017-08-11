@@ -4,15 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-
-	"github.com/mholt/caddy/caddyhttp/httpserver"
 )
-
-// WebHook is middleware for handling web hooks of git providers
-type WebHook struct {
-	Repos []*Repo
-	Next  httpserver.Handler
-}
 
 // HookConfig is a webhook handler configuration.
 type HookConfig struct {
@@ -78,47 +70,45 @@ var defaultHandlers = []string{
 	"gogs",
 }
 
-// ServeHTTP implements the middlware.Handler interface.
-func (h WebHook) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
+func handleWebhookIfRequired(w http.ResponseWriter, r *http.Request, repo *Repo) (bool, int, error) {
+	if repo.Hook.URL != "" && r.URL.Path == repo.Hook.URL {
+		return handleWebhook(w, r, repo)
+	}
+	return false, 0, nil
+}
 
-	for _, repo := range h.Repos {
+func handleWebhook(w http.ResponseWriter, r *http.Request, repo *Repo) (bool, int, error) {
+	// if handler type is specified.
+	if handler, ok := handlers[repo.Hook.Type]; ok {
+		if !handler.DoesHandle(r.Header) {
+			return true, http.StatusBadRequest, errors.New(http.StatusText(http.StatusBadRequest))
+		}
+		status, err := handler.Handle(w, r, repo)
+		// if the webhook is ignored, log it and allow request to continue.
+		if hookIgnored(err) {
+			Logger().Println(err)
+			err = nil
+		}
+		return true, status, err
+	}
 
-		if r.URL.Path == repo.Hook.URL {
-
-			// if handler type is specified.
-			if handler, ok := handlers[repo.Hook.Type]; ok {
-				if !handler.DoesHandle(r.Header) {
-					return http.StatusBadRequest, errors.New(http.StatusText(http.StatusBadRequest))
-				}
-				status, err := handler.Handle(w, r, repo)
-				// if the webhook is ignored, log it and allow request to continue.
-				if hookIgnored(err) {
-					Logger().Println(err)
-					err = nil
-				}
-				return status, err
+	// auto detect handler
+	for _, h := range defaultHandlers {
+		// if a handler indicates it does handle the request,
+		// we do not try other handlers. Only one handler ever
+		// handles a specific request.
+		if handlers[h].DoesHandle(r.Header) {
+			status, err := handlers[h].Handle(w, r, repo)
+			// if the webhook is ignored, log it and allow request to continue.
+			if hookIgnored(err) {
+				Logger().Println(err)
+				err = nil
 			}
-
-			// auto detect handler
-			for _, h := range defaultHandlers {
-				// if a handler indicates it does handle the request,
-				// we do not try other handlers. Only one handler ever
-				// handles a specific request.
-				if handlers[h].DoesHandle(r.Header) {
-					status, err := handlers[h].Handle(w, r, repo)
-					// if the webhook is ignored, log it and allow request to continue.
-					if hookIgnored(err) {
-						Logger().Println(err)
-						err = nil
-					}
-					return status, err
-				}
-			}
-
-			// no compatible handler
-			Logger().Println("No compatible handler found. Consider enabling generic handler with 'hook_type generic'.")
+			return true, status, err
 		}
 	}
 
-	return h.Next.ServeHTTP(w, r)
+	// no compatible handler
+	Logger().Println("No compatible handler found. Consider enabling generic handler with 'hook_type generic'.")
+	return false, 0, nil
 }

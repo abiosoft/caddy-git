@@ -33,20 +33,22 @@ func (g Git) Repo(i int) *Repo {
 // Repo is the structure that holds required information
 // of a git repository.
 type Repo struct {
-	URL        string        // Repository URL
-	Path       string        // Directory to pull to
-	Host       string        // Git domain host e.g. github.com
-	Branch     string        // Git branch
-	KeyPath    string        // Path to private ssh key
-	Interval   time.Duration // Interval between pulls
-	CloneArgs  []string      // Additonal cli args to pass to git clone
-	PullArgs   []string      // Additonal cli args to pass to git pull
-	Then       []Then        // Commands to execute after successful git pull
-	pulled     bool          // true if there was a successful pull
-	lastPull   time.Time     // time of the last successful pull
-	lastCommit string        // hash for the most recent commit
-	latestTag  string        // latest tag name
-	Hook       HookConfig    // Webhook configuration
+	URL            string               // Repository URL
+	Path           string               // Directory to pull to
+	Host           string               // Git domain host e.g. github.com
+	Branch         string               // Git branch
+	KeyPath        string               // Path to private ssh key
+	Interval       time.Duration        // Interval between pulls
+	CloneArgs      []string             // Additonal cli args to pass to git clone
+	PullArgs       []string             // Additonal cli args to pass to git pull
+	Then           []Then               // Commands to execute after successful git pull
+	pulled         bool                 // true if there was a successful pull
+	lastPull       time.Time            // time of the last successful pull
+	lastCommit     string               // hash for the most recent commit
+	latestTag      string               // latest tag name
+	Hook           HookConfig           // Webhook configuration
+	StatusEndpoint StatusEndpointConfig // Status endpoint configuration
+	seState        *statusEndpointState
 	sync.Mutex
 }
 
@@ -83,7 +85,11 @@ func (r *Repo) Pull() error {
 		Logger().Println("No new changes.")
 		return nil
 	}
-	return r.execThen()
+	err = r.execThen()
+	if err != nil {
+		return err
+	}
+	return r.fireStatusChangeEvent()
 }
 
 // pull performs git pull, or git clone if repository does not exist.

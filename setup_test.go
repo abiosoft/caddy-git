@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/abiosoft/caddy-git/gittest"
+	"github.com/abiosoft/caddy-git/testutils"
 	"github.com/mholt/caddy"
 )
 
 // init sets the OS used to fakeOS
 func init() {
-	SetOS(gittest.FakeOS)
+	SetOS(testutils.FakeOS)
 }
 
 func TestGitSetup(t *testing.T) {
@@ -176,6 +176,67 @@ func TestGitParse(t *testing.T) {
 				Type:   "gogs",
 			},
 		}},
+		{`git git@bitbucket.org:2222/user/repo.git {
+		}`, false, &Repo{
+			StatusEndpoint: StatusEndpointConfig{
+				URL: "",
+				Secret: "",
+				Skills: nil,
+			},
+		}},
+		{`git git@bitbucket.org:2222/user/repo.git {
+			status_endpoint /foo
+		}`, false, &Repo{
+			StatusEndpoint: StatusEndpointConfig{
+				URL: "/foo",
+				Secret: "",
+				Skills: nil,
+			},
+		}},
+		{`git git@bitbucket.org:2222/user/repo.git {
+			status_endpoint /foo bar
+		}`, false, &Repo{
+			StatusEndpoint: StatusEndpointConfig{
+				URL: "/foo",
+				Secret: "bar",
+			},
+		}},
+		{`git git@bitbucket.org:2222/user/repo.git {
+			status_endpoint_skill
+		}`, false, &Repo{
+			StatusEndpoint: StatusEndpointConfig{
+				URL: "",
+				Secret: "",
+				Skills: map[StatusEndpointSkill]bool{
+					statusEndpointSkillGet: false,
+					statusEndpointSkillWebsocket: false,
+				},
+			},
+		}},
+		{`git git@bitbucket.org:2222/user/repo.git {
+			status_endpoint_skill get
+		}`, false, &Repo{
+			StatusEndpoint: StatusEndpointConfig{
+				URL: "",
+				Secret: "",
+				Skills: map[StatusEndpointSkill]bool{
+					statusEndpointSkillGet: true,
+					statusEndpointSkillWebsocket: false,
+				},
+			},
+		}},
+		{`git git@bitbucket.org:2222/user/repo.git {
+			status_endpoint_skill websocket get
+		}`, false, &Repo{
+			StatusEndpoint: StatusEndpointConfig{
+				URL: "",
+				Secret: "",
+				Skills: map[StatusEndpointSkill]bool{
+					statusEndpointSkillGet: true,
+					statusEndpointSkillWebsocket: true,
+				},
+			},
+		}},
 	}
 
 	for i, test := range tests {
@@ -203,7 +264,7 @@ func TestIntervals(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		SetLogger(gittest.NewLogger(gittest.Open("file")))
+		SetLogger(testutils.NewLogger(testutils.Open("file")))
 		c1 := caddy.NewTestController("http", test)
 		git, err := parse(c1)
 		check(t, err)
@@ -223,14 +284,14 @@ func TestIntervals(t *testing.T) {
 		check(t, err)
 
 		// wait for first background pull
-		gittest.Sleep(time.Millisecond * 100)
+		testutils.Sleep(time.Millisecond * 100)
 
 		// switch logger to test file
-		logFile := gittest.Open("file")
-		SetLogger(gittest.NewLogger(logFile))
+		logFile := testutils.Open("file")
+		SetLogger(testutils.NewLogger(logFile))
 
 		// sleep for the interval
-		gittest.Sleep(repo.Interval)
+		testutils.Sleep(repo.Interval)
 
 		// get log output
 		out, err := ioutil.ReadAll(logFile)

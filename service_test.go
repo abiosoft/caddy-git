@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/abiosoft/caddy-git/gittest"
+	"github.com/abiosoft/caddy-git/testutils"
 )
 
 func init() {
-	SetOS(gittest.FakeOS)
+	SetOS(testutils.FakeOS)
 }
 
 func TestServices(t *testing.T) {

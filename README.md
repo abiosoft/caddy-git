@@ -26,17 +26,19 @@ For more control or to use a private repository, use the following syntax:
 
 ```
 git [repo path] {
-	repo        repo
-	path        path
-	branch      branch
-	key         key
-	interval    interval
-	clone_args  args
-	pull_args   args
-	hook        path secret
-	hook_type   type
-	then        command [args...]
-	then_long   command [args...]
+	repo                  repo
+	path                  path
+	branch                branch
+	key                   key
+	interval              interval
+	clone_args            args
+	pull_args             args
+	hook                  path secret
+	hook_type             type
+	status_endpoint       path [secret]
+	status_endpoint_skill [skills...]
+	then                  command [args...]
+	then_long             command [args...]
 }
 ```
 * **repo** is the URL to the repository; SSH and HTTPS URLs are supported.
@@ -48,6 +50,9 @@ git [repo path] {
 * **pull_args** is the additional cli args to pass to `git pull` e.g. `-s recursive -X theirs`. `git pull` is used when the source is being updated.
 * **path** and **secret** are used to create a webhook which pulls the latest right after a push. This is limited to the [supported webhooks](#supported-webhooks). **secret** is currently supported for GitHub, Gitlab and Travis hooks only.
 * **type** is webhook type to use. The webhook type is auto detected by default but it can be explicitly set to one of the [supported webhooks](#supported-webhooks). This is a requirement for generic webhook.
+* **path** and **secret** are used to create a json endpoint to serve status details about the actual repository such as current commit hash etc. If a **secret** is provided the callee is required to provided this secret via basic auth request. You can use [reload_page_on_changes.js](assets/reload_page_on_changes.js) to reload your base HTML file automatically on changes.
+* **skills** will enable only this skill - if not provided all available skills are enabled by default. See: [supported skills](#supported-status-endpoint-skills)
+* **command** is a command to execute after successful pull; followed by **args** which are any arguments to pass to the command. You can have multiple lines of this for multiple commands. **then_long** is for long executing commands that should run in background.
 * **command** is a command to execute after successful pull; followed by **args** which are any arguments to pass to the command. You can have multiple lines of this for multiple commands. **then_long** is for long executing commands that should run in background.
 
 Each property in the block is optional. The path and repo may be specified on the first line, as in the first syntax, or they may be specified in the block with other values.
@@ -59,6 +64,10 @@ Each property in the block is optional. The path and repo may be specified on th
 * [travis](https://travis-ci.org)
 * [gogs](https://gogs.io)
 * generic
+
+#### Supported status endpoint skills
+* **get** serves this endpoint as regular HTTPv1 GET.
+* **websocket** serves this endpoint as websocket and send the status JSON over this socket in every moment the repository was updated.
 
 ### Examples
 
@@ -116,3 +125,19 @@ Generic webhook payload: `<branch>` is branch name e.g. `master`.
 }
 ```
 
+Automatically reload your page on update of your Git repository:
+```
+git git@github.com:user/site {
+	status_endpoint /status
+}
+```
+
+Add [reload_page_on_changes.js](assets/reload_page_on_changes.js) to your repo.
+
+And add to your `index.html` (within the repository) the following lines:
+```
+<script>CHANGE_STATUS_DETECTION_PATH="/status";</script>
+<script src="reload_page_on_changes.js"></script>
+```
+
+> Hint: You can use the [filter plugin](https://caddyserver.com/docs/http.filter) to inject this direct into your page without modifying it directly.

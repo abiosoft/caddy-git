@@ -1,6 +1,6 @@
 // Package gittest is a test package for the git middleware.
 // It implements a mock gitos.OS, gitos.Cmd and gitos.File.
-package gittest
+package testutils
 
 import (
 	"io"

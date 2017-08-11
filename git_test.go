@@ -6,12 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/abiosoft/caddy-git/gittest"
+	"github.com/abiosoft/caddy-git/testutils"
+	"reflect"
 )
 
 // init sets the OS used to fakeOS.
 func init() {
-	SetOS(gittest.FakeOS)
+	SetOS(testutils.FakeOS)
 }
 
 func check(t *testing.T, err error) {
@@ -38,8 +39,8 @@ func TestHelpers(t *testing.T) {
 
 	out, err := runCmdOutput(gitBinary, []string{"-version"}, "")
 	check(t, err)
-	if out != gittest.CmdOutput {
-		t.Errorf("Expected %v found %v", gittest.CmdOutput, out)
+	if out != testutils.CmdOutput {
+		t.Errorf("Expected %v found %v", testutils.CmdOutput, out)
 	}
 
 	err = runCmd(gitBinary, []string{"-version"}, "")
@@ -73,7 +74,7 @@ func TestGit(t *testing.T) {
 	}
 
 	// pull with success
-	logFile := gittest.Open("file")
+	logFile := testutils.Open("file")
 	SetLogger(log.New(logFile, "", 0))
 	tests := []struct {
 		repo   *Repo
@@ -99,11 +100,15 @@ Command 'echo Hello' successful.
 	}
 
 	for i, test := range tests {
-		gittest.CmdOutput = test.repo.URL
+		testutils.CmdOutput = test.repo.URL
 
 		test.repo = createRepo(test.repo)
 
-		err := test.repo.Prepare()
+		statusChangeHandler := &testStatusChangeHandlerImpl{}
+		err := test.repo.registerOnStatusChange(statusChangeHandler)
+		check(t, err)
+
+		err = test.repo.Prepare()
 		check(t, err)
 
 		err = test.repo.Pull()
@@ -113,6 +118,16 @@ Command 'echo Hello' successful.
 		check(t, err)
 		if test.output != string(out) {
 			t.Errorf("Pull with Success %v: Expected %v found %v", i, test.output, string(out))
+		}
+
+		if statusChangeHandler.numberOfCalls != 1 {
+			t.Errorf("Number of status change handler calls. Expected %v found %v", 1, statusChangeHandler.numberOfCalls)
+		}
+		if statusChangeHandler.lastRepo != test.repo {
+			t.Errorf("Repo provided to status change handler. Expected %v found %v", test.repo, statusChangeHandler.lastRepo)
+		}
+		if !reflect.DeepEqual(statusChangeHandler.lastStatus, test.repo.toStatus()) {
+			t.Errorf("Status provided to status change handler. Expected %v found %v", test.repo.toStatus(), statusChangeHandler.lastStatus)
 		}
 	}
 
@@ -124,7 +139,7 @@ Command 'echo Hello' successful.
 		&Repo{Path: "gitdir", KeyPath: ".key"},
 	}
 
-	gittest.CmdOutput = "git@github.com:u1/repo.git"
+	testutils.CmdOutput = "git@github.com:u1/repo.git"
 	for i, repo := range repos {
 		repo = createRepo(repo)
 
@@ -161,7 +176,7 @@ Command 'echo Hello' successful.
 
 		before := r.repo.lastPull
 
-		gittest.Sleep(r.repo.Interval)
+		testutils.Sleep(r.repo.Interval)
 
 		err = r.repo.Pull()
 		after := r.repo.lastPull
@@ -182,6 +197,7 @@ func createRepo(r *Repo) *Repo {
 		Host:     "github.com",
 		Branch:   "master",
 		Interval: time.Second * 60,
+		seState: newStatusEndpointState(),
 	}
 	if r == nil {
 		return repo
@@ -211,13 +227,26 @@ func createRepo(r *Repo) *Repo {
 	return repo
 }
 
+type testStatusChangeHandlerImpl struct {
+	lastRepo      *Repo
+	lastStatus    Status
+	numberOfCalls int
+}
+
+func (handler *testStatusChangeHandlerImpl) handle(repo *Repo, status Status) bool {
+	handler.lastRepo = repo
+	handler.lastStatus = status
+	handler.numberOfCalls++
+	return true
+}
+
 var expectedBashScript = `#!/usr/bin/env bash
 
 mkdir -p ~/.ssh;
 touch ~/.ssh/known_hosts;
 ssh-keyscan -t rsa,dsa github.com 2>&1 | sort -u - ~/.ssh/known_hosts > ~/.ssh/tmp_hosts;
 cat ~/.ssh/tmp_hosts >> ~/.ssh/known_hosts;
-` + gittest.TempFileName + ` -i ~/.key clone git@github.com/repo/user;
+` + testutils.TempFileName + ` -i ~/.key clone git@github.com/repo/user;
 `
 
 var expectedWrapperScript = `#!/usr/bin/env bash

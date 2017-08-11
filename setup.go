@@ -44,11 +44,10 @@ func setup(c *caddy.Controller) error {
 	for i := range git {
 		repo := git.Repo(i)
 
+		hookRepo := false
 		// If a HookUrl is set, we switch to event based pulling.
-		// Install the url handler
 		if repo.Hook.URL != "" {
-
-			hookRepos = append(hookRepos, repo)
+			hookRepo = true
 
 			startupFuncs = append(startupFuncs, func() error {
 				return repo.Pull()
@@ -64,6 +63,16 @@ func setup(c *caddy.Controller) error {
 				return repo.Pull()
 			})
 		}
+
+		if repo.StatusEndpoint.URL != "" {
+			hookRepo = true
+		}
+
+		// Install the url handler
+		if hookRepo {
+			hookRepos = append(hookRepos, repo)
+		}
+
 	}
 
 	// ensure the functions are executed once per server block
@@ -78,10 +87,10 @@ func setup(c *caddy.Controller) error {
 	// if there are repo(s) with webhook
 	// return handler
 	if len(hookRepos) > 0 {
-		webhook := &WebHook{Repos: hookRepos}
+		handler := &Handler{Repos: hookRepos}
 		httpserver.GetConfig(c).AddMiddleware(func(next httpserver.Handler) httpserver.Handler {
-			webhook.Next = next
-			return webhook
+			handler.Next = next
+			return handler
 		})
 	}
 
@@ -93,7 +102,7 @@ func parse(c *caddy.Controller) (Git, error) {
 
 	config := httpserver.GetConfig(c)
 	for c.Next() {
-		repo := &Repo{Branch: "master", Interval: DefaultInterval, Path: config.Root}
+		repo := &Repo{Branch: "master", Interval: DefaultInterval, Path: config.Root, seState: newStatusEndpointState()}
 
 		args := c.RemainingArgs()
 
@@ -173,6 +182,44 @@ func parse(c *caddy.Controller) (Git, error) {
 					return nil, c.Errf("invalid hook type %v", t)
 				}
 				repo.Hook.Type = t
+			case "status_endpoint":
+				if !c.NextArg() {
+					return nil, c.ArgErr()
+				}
+				repo.StatusEndpoint.URL = c.Val()
+
+				// optional secret for validation
+				if c.NextArg() {
+					repo.StatusEndpoint.Secret = c.Val()
+				}
+			case "status_endpoint_skill":
+				plainSkills := c.RemainingArgs()
+				errs := []error{}
+
+				repo.StatusEndpoint.Skills = map[StatusEndpointSkill]bool{}
+				// at first set all to false - to prevent default behavior if not set
+				for _, candidate := range supportedStatusEndpointSkills {
+					repo.StatusEndpoint.Skills[candidate] = false
+				}
+
+				// Now set all configured skills to true
+				for _, plainSkill := range plainSkills {
+					found := false
+					for _, candidate := range supportedStatusEndpointSkills {
+						if plainSkill == string(candidate) {
+							found = true
+							repo.StatusEndpoint.Skills[candidate] = true
+							break
+						}
+					}
+					if !found {
+						errs = append(errs, c.Errf("invalid status endpoint skill %v", plainSkill))
+					}
+				}
+
+				if len(errs) > 0 {
+					return nil, mergeErrors(errs...)
+				}
 			case "then":
 				if !c.NextArg() {
 					return nil, c.ArgErr()
