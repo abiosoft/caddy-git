@@ -17,6 +17,7 @@ func init() {
 func check(t *testing.T, err error) {
 	if err != nil {
 		t.Errorf("Error not expected but found %v", err)
+		t.FailNow()
 	}
 }
 
@@ -80,8 +81,8 @@ func TestGit(t *testing.T) {
 		output string
 	}{
 		{
-			&Repo{Path: "gitdir", URL: "git@github.com:user/repo.git", KeyPath: "~/.key", Then: []Then{NewThen("echo", "Hello")}},
-			`git@github.com:user/repo.git pulled.
+			&Repo{Path: "gitdir", URL: "ssh://git@github.com:user/repo.git", KeyPath: "~/.key", Then: []Then{NewThen("echo", "Hello")}},
+			`ssh://git@github.com:user/repo.git pulled.
 Command 'echo Hello' successful.
 `,
 		},
@@ -92,8 +93,8 @@ Command 'echo Hello' successful.
 `,
 		},
 		{
-			&Repo{URL: "git@github.com:user/repo"},
-			`git@github.com:user/repo pulled.
+			&Repo{URL: "ssh://git@github.com:user/repo"},
+			`ssh://git@github.com:user/repo pulled.
 `,
 		},
 	}

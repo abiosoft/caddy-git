@@ -3,7 +3,6 @@ package git
 import (
 	"fmt"
 	"net/url"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -109,11 +108,7 @@ func parse(c *caddy.Controller) (Git, error) {
 			repo.Path = clonePath(args[1])
 			fallthrough
 		case 1:
-			u, err := validateURL(args[0])
-			if err != nil {
-				return nil, err
-			}
-			repo.URL = u
+			repo.URL = args[0]
 		}
 
 		for c.NextBlock() {
@@ -122,11 +117,7 @@ func parse(c *caddy.Controller) (Git, error) {
 				if !c.NextArg() {
 					return nil, c.ArgErr()
 				}
-				u, err := validateURL(c.Val())
-				if err != nil {
-					return nil, err
-				}
-				repo.URL = u
+				repo.URL = c.Val()
 			case "path":
 				if !c.NextArg() {
 					return nil, c.ArgErr()
@@ -196,33 +187,32 @@ func parse(c *caddy.Controller) (Git, error) {
 		if repo.URL == "" {
 			return nil, c.ArgErr()
 		}
+		// validate repo url
+		if repoURL, err := parseURL(repo.URL, repo.KeyPath != ""); err != nil {
+			return nil, err
+		} else {
+			repo.URL = repoURL.String()
+			repo.Host = repoURL.Hostname()
+		}
 
 		// if private key is not specified, convert repository URL to https
 		// to avoid ssh authentication
 		// else validate git URL
 		// Note: private key support not yet available on Windows
-		var err error
-		if repo.KeyPath == "" {
-			repo.URL, repo.Host, err = sanitizeHTTP(repo.URL)
-		} else {
-			repo.URL, repo.Host, err = sanitizeSSH(repo.URL)
+		if repo.KeyPath != "" {
 			// TODO add Windows support for private repos
 			if runtime.GOOS == "windows" {
-				return nil, fmt.Errorf("private repository not yet supported on Windows")
+				return nil, fmt.Errorf("ssh authentication not yet supported on Windows")
 			}
 		}
 
-		if err != nil {
-			return nil, err
-		}
-
 		// validate git requirements
-		if err = Init(); err != nil {
+		if err := Init(); err != nil {
 			return nil, err
 		}
 
 		// prepare repo for use
-		if err = repo.Prepare(); err != nil {
+		if err := repo.Prepare(); err != nil {
 			return nil, err
 		}
 
@@ -233,124 +223,33 @@ func parse(c *caddy.Controller) (Git, error) {
 	return git, nil
 }
 
-// validateURL validates repoUrl is a valid git url and appends
+// parseURL validates if repoUrl is a valid git url and appends
 // with .git if missing.
-func validateURL(repoURL string) (string, error) {
-	u, err := parseURL(repoURL)
-	if err != nil {
-		return "", err
-	}
-	if u.Scheme == "" {
-		u.Scheme = "https"
-	}
-
-	switch u.Scheme {
-	case "https", "http", "ssh":
+func parseURL(repoURL string, private bool) (*url.URL, error) {
+	// scheme
+	urlParts := strings.Split(repoURL, "://")
+	switch {
+	case strings.HasPrefix(repoURL, "https://"):
+	case strings.HasPrefix(repoURL, "http://"):
+	case strings.HasPrefix(repoURL, "ssh://"):
+	case len(urlParts) > 1:
+		return nil, fmt.Errorf("Invalid url scheme %s. If url contains port, scheme is required", urlParts[0])
 	default:
-		return "", fmt.Errorf("Invalid url scheme %s. If url contains port, scheme is required", u.Scheme)
-	}
-
-	if !strings.HasSuffix(u.String(), ".git") {
-		return u.String() + ".git", nil
-	}
-	return u.String(), nil
-}
-
-// sanitizeHTTP cleans up repository URL and converts to https format
-// if currently in ssh format.
-// Returns sanitized url, hostName (e.g. github.com, bitbucket.com)
-// and possible error
-func sanitizeHTTP(repoURL string) (string, string, error) {
-	u, err := parseURL(repoURL)
-	if err != nil {
-		return "", "", err
-	}
-
-	// ensure the url is not ssh
-	if u.Scheme == "ssh" {
-		u.Scheme = "https"
-	}
-
-	// convert to http format if in ssh format
-	if strings.Contains(u.Host, ":") {
-		s := strings.SplitN(u.Host, ":", 2)
-		//  alter path and host if we're sure its not a port
-		if _, err := strconv.Atoi(s[1]); err != nil {
-			u.Host = s[0]
-			u.Path = path.Join(s[1], u.Path)
+		if private {
+			repoURL = "ssh://" + repoURL
+		} else {
+			repoURL = "https://" + repoURL
 		}
 	}
 
-	// Bitbucket require the user to be set into the HTTP URL
-	if u.Host == "bitbucket.org" && u.User == nil {
-		segments := strings.Split(u.Path, "/")
-		u.User = url.User(segments[1])
-	}
-
-	return u.String(), u.Host, nil
-}
-
-// sanitizeSSH cleans up repository url and converts to ssh format for private
-// repositories if required.
-// Returns sanitized url, hostName (e.g. github.com, bitbucket.com)
-// and possible error
-func sanitizeSSH(repoURL string) (string, string, error) {
-	u, err := parseURL(repoURL)
-	if err != nil {
-		return "", "", err
-	}
-
-	u.Scheme = ""
-	host := u.Host
-	// convert to ssh format if not in ssh format
-	if !strings.Contains(u.Host, ":") {
-		if u.Path[0] == '/' {
-			u.Path = ":" + u.Path[1:]
-		} else if u.Path[0] != ':' {
-			u.Path = ":" + u.Path
-		}
-	} else {
-		s := strings.SplitN(u.Host, ":", 2)
-		host = s[0]
-		// if port is set, ssh scheme is required
-		if _, err := strconv.Atoi(s[1]); err == nil {
-			u.Scheme = "ssh"
-		}
-	}
-
-	// ensure user is set
-	if u.User == nil {
-		u.User = url.User("git")
-	}
-
-	// remove unintended `/` added by url.String and `//` if scheme is not ssh.
-	// TODO find a cleaner way
-	replacer := strings.NewReplacer("/:", ":", "//", "")
-	if u.Scheme == "ssh" {
-		replacer = strings.NewReplacer("/:", ":")
-	}
-	repoURL = replacer.Replace(u.String())
-	return repoURL, host, nil
-}
-
-func parseURL(repoURL string) (*url.URL, error) {
-	var replacers struct {
-		before, after *strings.Replacer
-	}
-	replacers.before = strings.NewReplacer(":", "..")
-	replacers.after = strings.NewReplacer("..", ":")
-
-	// hack to hide colons in ssh URL
-	if str := strings.Split(repoURL, "://"); len(str) > 1 {
-		repoURL = str[0] + "://" + replacers.before.Replace(str[1])
-	} else {
-		repoURL = replacers.before.Replace(repoURL)
+	// .git suffix for consistency
+	if !strings.HasSuffix(repoURL, ".git") {
+		repoURL += ".git"
 	}
 
 	u, err := url.Parse(repoURL)
 	if err != nil {
 		return nil, err
 	}
-	u.Host = replacers.after.Replace(u.Host)
 	return u, nil
 }
