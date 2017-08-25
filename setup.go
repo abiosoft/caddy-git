@@ -108,7 +108,7 @@ func parse(c *caddy.Controller) (Git, error) {
 			repo.Path = clonePath(args[1])
 			fallthrough
 		case 1:
-			repo.URL = args[0]
+			repo.URL = RepoURL(args[0])
 		}
 
 		for c.NextBlock() {
@@ -117,7 +117,7 @@ func parse(c *caddy.Controller) (Git, error) {
 				if !c.NextArg() {
 					return nil, c.ArgErr()
 				}
-				repo.URL = c.Val()
+				repo.URL = RepoURL(c.Val())
 			case "path":
 				if !c.NextArg() {
 					return nil, c.ArgErr()
@@ -188,10 +188,10 @@ func parse(c *caddy.Controller) (Git, error) {
 			return nil, c.ArgErr()
 		}
 		// validate repo url
-		if repoURL, err := parseURL(repo.URL, repo.KeyPath != ""); err != nil {
+		if repoURL, err := parseURL(string(repo.URL), repo.KeyPath != ""); err != nil {
 			return nil, err
 		} else {
-			repo.URL = repoURL.String()
+			repo.URL = RepoURL(repoURL.String())
 			repo.Host = repoURL.Hostname()
 		}
 

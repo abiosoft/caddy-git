@@ -100,7 +100,7 @@ Command 'echo Hello' successful.
 	}
 
 	for i, test := range tests {
-		gittest.CmdOutput = test.repo.URL
+		gittest.CmdOutput = test.repo.URL.String()
 
 		test.repo = createRepo(test.repo)
 

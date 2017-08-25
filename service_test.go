@@ -20,14 +20,14 @@ func TestServices(t *testing.T) {
 		t.Errorf("Expected 1 service, found %v", len(Services.services))
 	}
 
-	Services.Stop(repo.URL, 1)
+	Services.Stop(string(repo.URL), 1)
 	if len(Services.services) != 0 {
 		t.Errorf("Expected 1 service, found %v", len(Services.services))
 	}
 
 	repos := make([]*Repo, 5)
 	for i := 0; i < 5; i++ {
-		repos[i] = &Repo{URL: fmt.Sprintf("test%v", i), Interval: time.Second * 2}
+		repos[i] = &Repo{URL: RepoURL(fmt.Sprintf("test%v", i)), Interval: time.Second * 2}
 		Start(repos[i])
 		if len(Services.services) != i+1 {
 			t.Errorf("Expected %v service(s), found %v", i+1, len(Services.services))
@@ -35,7 +35,7 @@ func TestServices(t *testing.T) {
 	}
 
 	gos.Sleep(time.Second * 5)
-	Services.Stop(repos[0].URL, 1)
+	Services.Stop(string(repos[0].URL), 1)
 	if len(Services.services) != 4 {
 		t.Errorf("Expected %v service(s), found %v", 4, len(Services.services))
 	}
@@ -53,13 +53,13 @@ func TestServices(t *testing.T) {
 	}
 
 	gos.Sleep(time.Second * 5)
-	Services.Stop(repo.URL, -1)
+	Services.Stop(string(repo.URL), -1)
 	if len(Services.services) != 4 {
 		t.Errorf("Expected %v service(s), found %v", 4, len(Services.services))
 	}
 
 	for _, repo := range repos {
-		Services.Stop(repo.URL, -1)
+		Services.Stop(string(repo.URL), -1)
 	}
 	if len(Services.services) != 0 {
 		t.Errorf("Expected %v service(s), found %v", 0, len(Services.services))

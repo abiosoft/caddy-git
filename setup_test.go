@@ -147,8 +147,8 @@ func TestGitParse(t *testing.T) {
 
 func TestIntervals(t *testing.T) {
 	tests := []string{
-		`git ssh://git@github.com:user/repo { interval 10 }`,
-		`git ssh://git@github.com:user/repo { interval 1 }`,
+		`git user:pass@github.com/user/repo { interval 10 }`,
+		`git user:pass@github.com/user/repo { interval 1 }`,
 	}
 
 	for i, test := range tests {
@@ -187,7 +187,7 @@ func TestIntervals(t *testing.T) {
 
 		// if greater than minimum interval
 		if repo.Interval >= time.Second*5 {
-			expected := `ssh://git@github.com:user/repo.git pulled.
+			expected := `https://user@github.com/user/repo.git pulled.
 No new changes.`
 
 			// ensure pull is done by tracing the output
@@ -202,7 +202,7 @@ No new changes.`
 		}
 
 		// stop background thread monitor
-		Services.Stop(repo.URL, 1)
+		Services.Stop(string(repo.URL), 1)
 
 	}
 
