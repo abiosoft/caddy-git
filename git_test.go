@@ -81,12 +81,6 @@ func TestGit(t *testing.T) {
 		output string
 	}{
 		{
-			&Repo{Path: "gitdir", URL: "ssh://git@github.com:user/repo.git", KeyPath: "~/.key", Then: []Then{NewThen("echo", "Hello")}},
-			`ssh://git@github.com:user/repo.git pulled.
-Command 'echo Hello' successful.
-`,
-		},
-		{
 			&Repo{Path: "gitdir", URL: "https://github.com/user/repo.git", Then: []Then{NewThen("echo", "Hello")}},
 			`https://github.com/user/repo.git pulled.
 Command 'echo Hello' successful.

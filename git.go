@@ -47,6 +47,15 @@ func (r RepoURL) String() string {
 	return u.String()
 }
 
+// Val returns git friendly Val that can be
+// passed to git clone.
+func (r RepoURL) Val() string {
+	if strings.HasPrefix(string(r), "ssh://") {
+		return strings.TrimPrefix(string(r), "ssh://")
+	}
+	return string(r)
+}
+
 // Repo is the structure that holds required information
 // of a git repository.
 type Repo struct {
@@ -129,11 +138,11 @@ func (r *Repo) pull() error {
 
 // clone performs git clone.
 func (r *Repo) clone() error {
-	params := append([]string{"clone", "-b", r.Branch}, append(r.CloneArgs, string(r.URL), r.Path)...)
+	params := append([]string{"clone", "-b", r.Branch}, append(r.CloneArgs, r.URL.Val(), r.Path)...)
 
 	tagMode := r.Branch == latestTag
 	if tagMode {
-		params = append([]string{"clone"}, append(r.CloneArgs, string(r.URL), r.Path)...)
+		params = append([]string{"clone"}, append(r.CloneArgs, r.URL.Val(), r.Path)...)
 	}
 
 	var err error
@@ -252,7 +261,7 @@ func (r *Repo) Prepare() error {
 			if !strings.HasSuffix(repoURL, ".git") {
 				repoURL += ".git"
 			}
-			if repoURL == string(r.URL) {
+			if repoURL == r.URL.Val() {
 				r.pulled = true
 				return nil
 			}
