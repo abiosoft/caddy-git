@@ -76,7 +76,7 @@ func (s *services) Stop(repoURL string, limit int) {
 	// locate repos
 	for i, j := 0, 0; i < len(s.services) && ((limit >= 0 && j < limit) || limit < 0); i++ {
 		service := s.services[i]
-		if service.repo.URL == repoURL {
+		if string(service.repo.URL) == repoURL {
 			// send halt signal
 			service.halt <- struct{}{}
 			s.services[i] = nil

@@ -2,6 +2,7 @@ package git
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -30,10 +31,35 @@ func (g Git) Repo(i int) *Repo {
 	return nil
 }
 
+// RepoURL is the repository url.
+type RepoURL string
+
+// String satisfies stringer and attempts to strip off authentication
+// info from url if it exists.
+func (r RepoURL) String() string {
+	u, err := url.Parse(string(r))
+	if err != nil {
+		return string(r)
+	}
+	if u.User != nil {
+		u.User = url.User(u.User.Username())
+	}
+	return u.String()
+}
+
+// Val returns git friendly Val that can be
+// passed to git clone.
+func (r RepoURL) Val() string {
+	if strings.HasPrefix(string(r), "ssh://") {
+		return strings.TrimPrefix(string(r), "ssh://")
+	}
+	return string(r)
+}
+
 // Repo is the structure that holds required information
 // of a git repository.
 type Repo struct {
-	URL            string               // Repository URL
+	URL            RepoURL              // Repository URL
 	Path           string               // Directory to pull to
 	Host           string               // Git domain host e.g. github.com
 	Branch         string               // Git branch
@@ -118,11 +144,11 @@ func (r *Repo) pull() error {
 
 // clone performs git clone.
 func (r *Repo) clone() error {
-	params := append([]string{"clone", "-b", r.Branch}, append(r.CloneArgs, r.URL, r.Path)...)
+	params := append([]string{"clone", "-b", r.Branch}, append(r.CloneArgs, r.URL.Val(), r.Path)...)
 
 	tagMode := r.Branch == latestTag
 	if tagMode {
-		params = append([]string{"clone"}, append(r.CloneArgs, r.URL, r.Path)...)
+		params = append([]string{"clone"}, append(r.CloneArgs, r.URL.Val(), r.Path)...)
 	}
 
 	var err error
@@ -241,7 +267,7 @@ func (r *Repo) Prepare() error {
 			if !strings.HasSuffix(repoURL, ".git") {
 				repoURL += ".git"
 			}
-			if repoURL == r.URL {
+			if repoURL == r.URL.Val() {
 				r.pulled = true
 				return nil
 			}

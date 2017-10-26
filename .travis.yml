@@ -3,5 +3,6 @@ language: go
 go:
   - 1.8
 
-script: go test 
+script: go test
+
 
