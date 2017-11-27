@@ -116,7 +116,11 @@ func bashScript(gitSSHPath string, repo *Repo, params []string) []byte {
 mkdir -p ~/.ssh;
 touch ~/.ssh/known_hosts;
 ssh-keyscan -t rsa,dsa {repo_host} 2>&1 | sort -u - ~/.ssh/known_hosts > ~/.ssh/tmp_hosts;
-cat ~/.ssh/tmp_hosts >> ~/.ssh/known_hosts;
+cat ~/.ssh/tmp_hosts | while read line
+do
+  echo $line;
+  grep -q "$line" ~/.ssh/known_hosts || echo $line >> ~/.ssh/known_hosts;
+done
 {git_ssh_path} -i {ssh_key_path} {ssh_params};
 `
 	replacer := strings.NewReplacer(
