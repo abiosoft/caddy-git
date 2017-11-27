@@ -211,7 +211,11 @@ var expectedBashScript = `#!/usr/bin/env bash
 mkdir -p ~/.ssh;
 touch ~/.ssh/known_hosts;
 ssh-keyscan -t rsa,dsa github.com 2>&1 | sort -u - ~/.ssh/known_hosts > ~/.ssh/tmp_hosts;
-cat ~/.ssh/tmp_hosts >> ~/.ssh/known_hosts;
+cat ~/.ssh/tmp_hosts | while read line
+do
+  echo $line;
+  grep -q "$line" ~/.ssh/known_hosts || echo $line >> ~/.ssh/known_hosts;
+done
 ` + gittest.TempFileName + ` -i ~/.key clone git@github.com/repo/user;
 `
 
