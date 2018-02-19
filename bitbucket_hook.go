@@ -12,9 +12,10 @@ import (
 
 // See: https://confluence.atlassian.com/bitbucket/manage-webhooks-735643732.html
 var bitbucketIPBlocks = []string{
-	"131.103.20.160/27",
-	"165.254.145.0/26",
-	"104.192.143.0/24",
+	"104.192.136.0/21",
+	"34.198.203.127",
+	"34.198.178.64",
+	"34.198.32.85",
 }
 
 // BitbucketHook is webhook for BitBucket.org.
@@ -110,6 +111,15 @@ func cleanRemoteIP(remoteIP string) string {
 func (b BitbucketHook) verifyBitbucketIP(remoteIP string) bool {
 	ipAddress := net.ParseIP(cleanRemoteIP(remoteIP))
 	for _, cidr := range bitbucketIPBlocks {
+		// it may be regular ip address
+		if !strings.Contains(cidr, "/") {
+			ip := net.ParseIP(cidr)
+			if ip.Equal(ipAddress) {
+				return true
+			}
+			continue
+		}
+
 		_, cidrnet, err := net.ParseCIDR(cidr)
 		if err != nil {
 			Logger().Printf("Error parsing CIDR block [%s]. Skipping...\n", cidr)
