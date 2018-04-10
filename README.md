@@ -12,7 +12,7 @@ If a pull fails, the service will retry up to three times. If the pull was not s
 
 **Requirements:** This directive requires git to be installed. Also, private repositories may only be accessed from Linux or Mac systems. (Contributions are welcome that make private repositories work on Windows.)
 
-### Syntax
+## Syntax
 
 ```
 git repo [path]
@@ -52,7 +52,18 @@ git [repo path] {
 
 Each property in the block is optional. The path and repo may be specified on the first line, as in the first syntax, or they may be specified in the block with other values.
 
+### Webhooks
+
+A webhook is an interface between a git repository and an external server. On Github, the simplest webhook makes a request to a 3rd-party URL when the repository is pushed to. You can set up a Github webhook at `github.com/[username]/[repository]/settings/hooks`, and a [Travis webhook](https://docs.travis-ci.com/user/notifications/#Configuring-webhook-notifications) in your `.travis.yml`. Make sure your webhooks are set to deliver JSON data!
+
+The JSON payload should include [at least a `ref` key](#user-content-generic-format), but all the default supported webhooks will handle this for you.
+
+The hook URL is the URL Caddy will watch for requests on; if your url is, for example `/__github_webhook__` and Caddy is hosting `https://example.com`, when a request is made to `https://example.com/__github_webhook__` Caddy will intercept this request and check that the secret in the request (configured wherever you configure your webhooks) and the secret in your Caddyfile match. If the request is valid, Caddy will `git pull` its local copy of the repo to update your site as soon as you push new data. It may be useful to then use a [post-merge](https://git-scm.com/docs/githooks#_post_merge) script or another git hook to rebuild any needed files (updating [SASS](http://sass-lang.com/) styles and regenerating [Hugo](https://gohugo.io/) sites are common use-cases), although the [`then`](#user-content-then-example) parameter can also be used for simpler cases.
+
+Note that because the hook URL is used as an API endpoint, you shouldn't have any content / files at its corresponding location in your website.
+
 #### Supported Webhooks
+
 * [github](https://github.com)
 * [gitlab](https://gitlab.com)
 * [bitbucket](https://bitbucket.org)
@@ -60,7 +71,7 @@ Each property in the block is optional. The path and repo may be specified on th
 * [gogs](https://gogs.io)
 * generic
 
-### Examples
+## Examples
 
 Public repository pulled into site root every hour:
 ```
@@ -83,6 +94,7 @@ git {
 }
 ```
 
+<a name="then-example"></a>
 Generate a static site with [Hugo](http://gohugo.io) after each pull:
 ```
 git github.com/user/site {
