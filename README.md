@@ -69,6 +69,7 @@ Note that because the hook URL is used as an API endpoint, you shouldn't have an
 * [bitbucket](https://bitbucket.org)
 * [travis](https://travis-ci.org)
 * [gogs](https://gogs.io)
+* [gitee](https://gitee.com)
 * generic
 
 ## Examples
