@@ -58,6 +58,7 @@ var handlers = map[string]hookHandler{
 	"generic":   GenericHook{},
 	"travis":    TravisHook{},
 	"gogs":      GogsHook{},
+	"gitee":     GiteeHook{},
 }
 
 // defaultHandlers is the list of handlers to choose from
@@ -68,6 +69,7 @@ var defaultHandlers = []string{
 	"bitbucket",
 	"travis",
 	"gogs",
+	"gitee",
 }
 
 func handleWebhookIfRequired(w http.ResponseWriter, r *http.Request, repo *Repo) (bool, int, error) {

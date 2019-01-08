@@ -18,13 +18,13 @@ func TestBitbucketDeployPush(t *testing.T) {
 		responseBody string
 		code         int
 	}{
-		{"131.103.20.192", "", "", "", 403},
-		{"131.103.20.160", "", "", "", 400},
-		{"131.103.20.160", "", "repo:push", "", 400},
-		{"131.103.20.160", pushBBBodyValid, "repo:push", "", 200},
-		{"131.103.20.165", pushBBBodyValid, "repo:push", "", 200},
-		{"131.103.20.160", pushBBBodyEmptyBranch, "repo:push", "", 400},
-		{"131.103.20.160", pushBBBodyDeleteBranch, "repo:push", "", 400},
+		{"104.192.136.20", "", "", "", 400},
+		{"131.103.20.160", "", "", "", 403},
+		{"104.192.136.120", "", "repo:push", "", 400},
+		{"34.198.203.127", pushBBBodyValid, "repo:push", "", 200},
+		{"34.198.178.64", pushBBBodyValid, "repo:push", "", 200},
+		{"34.198.32.85", pushBBBodyEmptyBranch, "repo:push", "", 400},
+		{"104.192.143.2", pushBBBodyDeleteBranch, "repo:push", "", 400},
 	} {
 
 		req, err := http.NewRequest("POST", "/bitbucket_deploy", bytes.NewBuffer([]byte(test.body)))
