@@ -5,11 +5,27 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestBitbucketDeployPush(t *testing.T) {
 	repo := &Repo{Branch: "master", Hook: HookConfig{URL: "/bitbucket_deploy"}}
 	bbHook := BitbucketHook{}
+
+	remoteIP := "18.246.31.128"
+	atlassianIPsMu.Lock()
+	atlassianIPs = atlassianIPResponse{
+		Items: []atlassianIPRange{
+			{
+				Network: remoteIP,
+				MaskLen: 25,
+				CIDR:    remoteIP + "/25",
+				Mask:    "255.255.255.128",
+			},
+		},
+		lastUpdated: time.Now(),
+	}
+	atlassianIPsMu.Unlock()
 
 	for i, test := range []struct {
 		ip           string
@@ -18,13 +34,13 @@ func TestBitbucketDeployPush(t *testing.T) {
 		responseBody string
 		code         int
 	}{
-		{"104.192.136.20", "", "", "", 400},
+		{remoteIP, "", "", "", 400},
 		{"131.103.20.160", "", "", "", 403},
-		{"104.192.136.120", "", "repo:push", "", 400},
-		{"34.198.203.127", pushBBBodyValid, "repo:push", "", 200},
-		{"34.198.178.64", pushBBBodyValid, "repo:push", "", 200},
-		{"34.198.32.85", pushBBBodyEmptyBranch, "repo:push", "", 400},
-		{"104.192.143.2", pushBBBodyDeleteBranch, "repo:push", "", 400},
+		{remoteIP, "", "repo:push", "", 400},
+		{remoteIP, pushBBBodyValid, "repo:push", "", 200},
+		{remoteIP, pushBBBodyValid, "repo:push", "", 200},
+		{remoteIP, pushBBBodyEmptyBranch, "repo:push", "", 400},
+		{remoteIP, pushBBBodyDeleteBranch, "repo:push", "", 400},
 	} {
 
 		req, err := http.NewRequest("POST", "/bitbucket_deploy", bytes.NewBuffer([]byte(test.body)))
@@ -54,45 +70,45 @@ func TestBitbucketDeployPush(t *testing.T) {
 
 var pushBBBodyEmptyBranch = `
 {
-  "push": {
-    "changes": [
-      {
-        "new": {
-          "type": "branch",
-          "name": "",
-          "target": {
-            "hash": "709d658dc5b6d6afcd46049c2f332ee3f515a67d"
-          }
-        }
-      }
-    ]
-  }
+	"push": {
+		"changes": [
+			{
+				"new": {
+					"type": "branch",
+					"name": "",
+					"target": {
+						"hash": "709d658dc5b6d6afcd46049c2f332ee3f515a67d"
+					}
+				}
+			}
+		]
+	}
 }
 `
 
 var pushBBBodyValid = `
 {
-  "push": {
-    "changes": [
-      {
-        "new": {
-          "type": "branch",
-          "name": "master",
-          "target": {
-            "hash": "709d658dc5b6d6afcd46049c2f332ee3f515a67d"
-          }
-        }
-      }
-    ]
-  }
+	"push": {
+		"changes": [
+			{
+				"new": {
+					"type": "branch",
+					"name": "master",
+					"target": {
+						"hash": "709d658dc5b6d6afcd46049c2f332ee3f515a67d"
+					}
+				}
+			}
+		]
+	}
 }
 `
 
 var pushBBBodyDeleteBranch = `
 {
-  "push": {
-    "changes": [
-    ]
-  }
+	"push": {
+		"changes": [
+		]
+	}
 }
 `
