@@ -97,13 +97,16 @@ func (b BitbucketHook) handlePush(body []byte, repo *Repo) error {
 	return nil
 }
 
-func cleanRemoteIP(remoteIP string) string {
-	// *httpRequest.RemoteAddr comes in format IP:PORT, remove the port
-	return strings.Split(remoteIP, ":")[0]
+func hostOnly(remoteAddr string) string {
+	host, _, _ := net.SplitHostPort(remoteAddr)
+	if host == "" {
+		return remoteAddr
+	}
+	return host
 }
 
-func (b BitbucketHook) verifyBitbucketIP(remoteIP string) bool {
-	ipAddress := net.ParseIP(cleanRemoteIP(remoteIP))
+func (b BitbucketHook) verifyBitbucketIP(remoteAddr string) bool {
+	ipAddress := net.ParseIP(hostOnly(remoteAddr))
 
 	updateBitBucketIPs()
 

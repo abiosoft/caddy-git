@@ -22,6 +22,12 @@ func TestBitbucketDeployPush(t *testing.T) {
 				CIDR:    remoteIP + "/25",
 				Mask:    "255.255.255.128",
 			},
+			{
+				Network: "2600:1f18:2146:e306:939f:d1b3:aa36:ac42",
+				MaskLen: 56,
+				CIDR:    "2600:1f18:2146:e300::/56",
+				Mask:    "ffff:ffff:ffff:ff00::",
+			},
 		},
 		lastUpdated: time.Now(),
 	}
@@ -38,6 +44,7 @@ func TestBitbucketDeployPush(t *testing.T) {
 		{"131.103.20.160", "", "", "", 403},
 		{remoteIP, "", "repo:push", "", 400},
 		{remoteIP, pushBBBodyValid, "repo:push", "", 200},
+		{"2600:1f18:2146:e306:939f:d1b3:aa36:ac42", pushBBBodyValid, "repo:push", "", 200}, // test IPv6
 		{remoteIP, pushBBBodyValid, "repo:push", "", 200},
 		{remoteIP, pushBBBodyEmptyBranch, "repo:push", "", 400},
 		{remoteIP, pushBBBodyDeleteBranch, "repo:push", "", 400},
