@@ -8,15 +8,9 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 )
-
-// See: https://confluence.atlassian.com/bitbucket/manage-webhooks-735643732.html
-var bitbucketIPBlocks = []string{
-	"104.192.136.0/21",
-	"34.198.203.127",
-	"34.198.178.64",
-	"34.198.32.85",
-}
 
 // BitbucketHook is webhook for BitBucket.org.
 type BitbucketHook struct{}
@@ -103,26 +97,42 @@ func (b BitbucketHook) handlePush(body []byte, repo *Repo) error {
 	return nil
 }
 
-func cleanRemoteIP(remoteIP string) string {
-	// *httpRequest.RemoteAddr comes in format IP:PORT, remove the port
-	return strings.Split(remoteIP, ":")[0]
+func hostOnly(remoteAddr string) string {
+	host, _, _ := net.SplitHostPort(remoteAddr)
+	if host == "" {
+		return remoteAddr
+	}
+	return host
 }
 
-func (b BitbucketHook) verifyBitbucketIP(remoteIP string) bool {
-	ipAddress := net.ParseIP(cleanRemoteIP(remoteIP))
-	for _, cidr := range bitbucketIPBlocks {
+func (b BitbucketHook) verifyBitbucketIP(remoteAddr string) bool {
+	ipAddress := net.ParseIP(hostOnly(remoteAddr))
+
+	updateBitBucketIPs()
+
+	atlassianIPsMu.Lock()
+	ipItems := atlassianIPs.Items
+	atlassianIPsMu.Unlock()
+
+	// if there was a problem getting list of IPs, might as well
+	// allow it since it could still need authentication anyway
+	if len(ipItems) == 0 {
+		return true
+	}
+
+	for _, item := range ipItems {
 		// it may be regular ip address
-		if !strings.Contains(cidr, "/") {
-			ip := net.ParseIP(cidr)
+		if !strings.Contains(item.CIDR, "/") {
+			ip := net.ParseIP(item.CIDR)
 			if ip.Equal(ipAddress) {
 				return true
 			}
 			continue
 		}
 
-		_, cidrnet, err := net.ParseCIDR(cidr)
+		_, cidrnet, err := net.ParseCIDR(item.CIDR)
 		if err != nil {
-			Logger().Printf("Error parsing CIDR block [%s]. Skipping...\n", cidr)
+			Logger().Printf("Error parsing CIDR block [%s]. Skipping...\n", item.CIDR)
 			continue
 		}
 
@@ -130,5 +140,60 @@ func (b BitbucketHook) verifyBitbucketIP(remoteIP string) bool {
 			return true
 		}
 	}
+
 	return false
 }
+
+func updateBitBucketIPs() {
+	atlassianIPsMu.Lock()
+	defer atlassianIPsMu.Unlock()
+
+	// if list of IP ranges is outdated, get latest
+	if atlassianIPs.lastUpdated.IsZero() ||
+		time.Since(atlassianIPs.lastUpdated) > 24*time.Hour {
+
+		resp, err := http.Get("https://ip-ranges.atlassian.com/")
+		if err != nil {
+			// allow, since we can't know for sure either way, I guess
+			Logger().Printf("[ERROR] Requesting recent IPs for bitbucket: %v", err)
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			Logger().Printf("[ERROR] Getting recent IPs for bitbucket: HTTP %d", resp.StatusCode)
+			return
+		}
+
+		var newIPs atlassianIPResponse
+		err = json.NewDecoder(resp.Body).Decode(&newIPs)
+		if err != nil {
+			Logger().Printf("[ERROR] Decoding recent IPs for bitbucket: %v", err)
+			return
+		}
+
+		// replace the IP list
+		newIPs.lastUpdated = time.Now()
+		atlassianIPs = newIPs
+	}
+}
+
+type atlassianIPResponse struct {
+	CreationDate string             `json:"creationDate"`
+	SyncToken    int                `json:"syncToken"`
+	Items        []atlassianIPRange `json:"items"`
+
+	lastUpdated time.Time // added by us
+}
+
+type atlassianIPRange struct {
+	Network string `json:"network"`
+	MaskLen int    `json:"mask_len"`
+	CIDR    string `json:"cidr"`
+	Mask    string `json:"mask"`
+}
+
+var (
+	atlassianIPs   atlassianIPResponse
+	atlassianIPsMu sync.Mutex
+)
