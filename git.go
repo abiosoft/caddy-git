@@ -257,11 +257,7 @@ func (r *Repo) Prepare() error {
 		// check if same repository
 		var repoURL string
 		if repoURL, err = r.originURL(); err == nil {
-			// add .git suffix if missing for adequate comparison.
-			if !strings.HasSuffix(repoURL, ".git") {
-				repoURL += ".git"
-			}
-			if repoURL == r.URL.Val() {
+			if strings.TrimSuffix(repoURL, ".git") == strings.TrimSuffix(r.URL.Val(), ".git") {
 				r.pulled = true
 				return nil
 			}

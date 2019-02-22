@@ -32,10 +32,10 @@ func TestGitParse(t *testing.T) {
 			args --depth 1
 			key ~/.key
 		}`, false, &Repo{
-			URL:       "ssh://git@github.com:user/repo.git",
+			URL:       "ssh://git@github.com:user/repo",
 			CloneArgs: []string{"--depth", "1"},
 		}},
-		{`git user:pass@github.com/user/repo {
+		{`git user:pass@github.com/user/repo.git {
 			args --depth 1
 		}`, false, &Repo{
 			URL:       "https://user:pass@github.com/user/repo.git",
@@ -46,10 +46,10 @@ func TestGitParse(t *testing.T) {
 		key ~/.key
 		}`, false, &Repo{
 			KeyPath: "~/.key",
-			URL:     "ssh://git@github.com:user/repo.git",
+			URL:     "ssh://git@github.com:user/repo",
 		}},
 		{`git {
-		repo ssh://git@github.com:user/repo
+		repo ssh://git@github.com:user/repo.git
 		key ~/.key
 		interval 600
 		}`, false, &Repo{
@@ -66,7 +66,7 @@ func TestGitParse(t *testing.T) {
 		then echo hello world
 		}`, false, &Repo{
 			KeyPath: "~/.key",
-			URL:     "ssh://git@github.com:user/repo.git",
+			URL:     "ssh://git@github.com:user/repo",
 			Then:    []Then{NewThen("echo", "hello world")},
 		}},
 		{`git https://user@bitbucket.org/user/repo.git`, false, &Repo{
@@ -147,8 +147,8 @@ func TestGitParse(t *testing.T) {
 
 func TestIntervals(t *testing.T) {
 	tests := []string{
-		`git user:pass@github.com/user/repo { interval 10 }`,
-		`git user:pass@github.com/user/repo { interval 1 }`,
+		`git user:pass@github.com/user/repo.git { interval 10 }`,
+		`git user:pass@github.com/user/repo.git { interval 1 }`,
 	}
 
 	for i, test := range tests {
