@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/abiosoft/caddy-git/gitos"
-	"github.com/mholt/caddy"
+	"github.com/caddyserver/caddy"
 )
 
 const (

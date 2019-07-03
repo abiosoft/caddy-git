@@ -70,10 +70,10 @@ func (g GiteeHook) handleToken(r *http.Request, body []byte, secret string) erro
 	token := r.Header.Get("X-Gitee-Token")
 	if token != "" {
 		if secret == "" {
-			Logger().Print("Unable to verify request. Secret not set in caddyfile!\n")
+			Logger().Println("unable to verify request. Secret not set in caddyfile!")
 		} else {
 			if token != secret {
-				return errors.New("Unable to verify request. The token and specified secret do not match!")
+				return errors.New("unable to verify request. The token and specified secret do not match")
 			}
 		}
 	}
