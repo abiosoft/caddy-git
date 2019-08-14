@@ -242,8 +242,23 @@ func parseURL(repoURL string, private bool) (*url.URL, error) {
 	}
 
 	u, err := url.Parse(repoURL)
+	if err == nil {
+		return u, nil
+	}
+
+	// Insert a pseudo port "0/" after the last colon to make url.Parse happy.
+	i := strings.LastIndex(repoURL, ":")
+	u, err = url.Parse(repoURL[:i+1] + "0/" + repoURL[i+1:])
 	if err != nil {
 		return nil, err
 	}
+
+	// u.Host is now suffixed with ":0" and the relative portion prefixes the
+	// u.Path. Reconcile the pseudo port added above.
+	p := strings.TrimLeft(u.Path, "/")
+	j := strings.Index(p, "/")
+	u.Path = p[j:]
+	u.Host = u.Host[:strings.LastIndex(u.Host, ":")+1] + p[:j]
+
 	return u, nil
 }
