@@ -26,17 +26,18 @@ For more control or to use a private repository, use the following syntax:
 
 ```
 git [repo path] {
-	repo        repo
-	path        path
-	branch      branch
-	key         key
-	interval    interval
-	clone_args  args
-	pull_args   args
-	hook        path secret
-	hook_type   type
-	then        command [args...]
-	then_long   command [args...]
+	repo         repo
+	path         path
+	branch       branch
+	key          key
+	interval     interval
+	clone_args   args
+	pull_args    args
+	hook         path secret
+	hook_type    type
+	then         command [args...]
+	then_long    command [args...]
+	skip_startup
 }
 ```
 * **repo** is the URL to the repository; SSH and HTTPS URLs are supported.
@@ -49,6 +50,7 @@ git [repo path] {
 * **path** and **secret** are used to create a webhook which pulls the latest right after a push. This is limited to the [supported webhooks](#supported-webhooks). **secret** is currently supported for GitHub, Gitlab and Travis hooks only.
 * **type** is webhook type to use. The webhook type is auto detected by default but it can be explicitly set to one of the [supported webhooks](#supported-webhooks). This is a requirement for generic webhook.
 * **command** is a command to execute after successful pull; followed by **args** which are any arguments to pass to the command. You can have multiple lines of this for multiple commands. **then_long** is for long executing commands that should run in background.
+* **skip_startup** is a flag if the repo should be cloned at start of caddy or not. If present the repo is not pulled during startup. This is useful when e.g. the git host is also proxied through the same caddy instance and all git operations fail as the git server is not yet available during startup.
 
 Each property in the block is optional. The path and repo may be specified on the first line, as in the first syntax, or they may be specified in the block with other values.
 
