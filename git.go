@@ -59,20 +59,21 @@ func (r RepoURL) Val() string {
 // Repo is the structure that holds required information
 // of a git repository.
 type Repo struct {
-	URL        RepoURL       // Repository URL
-	Path       string        // Directory to pull to
-	Host       string        // Git domain host e.g. github.com
-	Branch     string        // Git branch
-	KeyPath    string        // Path to private ssh key
-	Interval   time.Duration // Interval between pulls
-	CloneArgs  []string      // Additonal cli args to pass to git clone
-	PullArgs   []string      // Additonal cli args to pass to git pull
-	Then       []Then        // Commands to execute after successful git pull
-	pulled     bool          // true if there was a successful pull
-	lastPull   time.Time     // time of the last successful pull
-	lastCommit string        // hash for the most recent commit
-	latestTag  string        // latest tag name
-	Hook       HookConfig    // Webhook configuration
+	URL         RepoURL       // Repository URL
+	Path        string        // Directory to pull to
+	Host        string        // Git domain host e.g. github.com
+	Branch      string        // Git branch
+	KeyPath     string        // Path to private ssh key
+	Interval    time.Duration // Interval between pulls
+	CloneArgs   []string      // Additonal cli args to pass to git clone
+	PullArgs    []string      // Additonal cli args to pass to git pull
+	SkipStartup bool          // true if the initial pull/clone should not be be executed on startup
+	Then        []Then        // Commands to execute after successful git pull
+	pulled      bool          // true if there was a successful pull
+	lastPull    time.Time     // time of the last successful pull
+	lastCommit  string        // hash for the most recent commit
+	latestTag   string        // latest tag name
+	Hook        HookConfig    // Webhook configuration
 	sync.Mutex
 }
 

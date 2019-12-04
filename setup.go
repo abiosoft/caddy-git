@@ -49,9 +49,11 @@ func setup(c *caddy.Controller) error {
 
 			hookRepos = append(hookRepos, repo)
 
-			startupFuncs = append(startupFuncs, func() error {
-				return repo.Pull()
-			})
+			if !repo.SkipStartup {
+				startupFuncs = append(startupFuncs, func() error {
+					return repo.Pull()
+				})
+			}
 
 		} else {
 			startupFuncs = append(startupFuncs, func() error {
@@ -59,8 +61,12 @@ func setup(c *caddy.Controller) error {
 				// Start service routine in background
 				Start(repo)
 
-				// Do a pull right away to return error
-				return repo.Pull()
+				if !repo.SkipStartup {
+					// Do a pull right away to return error
+					return repo.Pull()
+				}
+
+				return nil
 			})
 		}
 	}
@@ -178,6 +184,8 @@ func parse(c *caddy.Controller) (Git, error) {
 				command := c.Val()
 				args := c.RemainingArgs()
 				repo.Then = append(repo.Then, NewLongThen(command, args...))
+			case "skip_startup":
+				repo.SkipStartup = true
 			default:
 				return nil, c.ArgErr()
 			}
